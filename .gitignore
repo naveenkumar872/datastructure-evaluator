@@ -28,6 +28,4 @@ uploads/
 Thumbs.db
 
 
-create_auth_db.py
-import_students.py
-list_users.py
+
