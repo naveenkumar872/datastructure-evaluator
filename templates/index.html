@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Data Structure Evaluator - Student Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <script>
+    // Check if the user is authenticated
+    fetch('/auth-check')
+      .then((response) => {
+        if (!response.ok) {
+          window.location.href = '/login.html';
+        }
+      })
+      .catch(() => {
+        window.location.href = '/login.html';
+      });
+  </script>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      </svg>
+      Data Structure Evaluator
+    </div>
+    <div class="role">
+      <div class="user-badge">
+        <div class="avatar" id="user-avatar">S</div>
+        <span id="username-display">Student</span>
+      </div>
+      <button id="btn-logout" class="btn secondary">Log Out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-header">
+          <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg> Problems</h3>
+        </div>
+        <ul id="problem-list" class="student-list">
+          <li class="student-item" style="cursor: default;">
+            <div class="student-info">
+              <div class="student-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">1</div>
+              <div>
+                <div class="student-name">Check Array is Sorted</div>
+                <div class="student-meta">Data Structures - Day 1</div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="content">
+      <!-- Problem Card -->
+      <div class="problem-card">
+        <div class="problem-header">
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+            </svg> Data Structure - Day 1</h2>
+          <h3>1. Check Array is Sorted</h3>
+        </div>
+
+        <div class="problem-body">
+          <div id="problem-text">
+            <div class="problem-section">
+              <div class="problem-label">Problem Statement</div>
+              <div class="problem-content">
+                Check whether an array is sorted in ascending order.
+              </div>
+            </div>
+
+            <div class="problem-section">
+              <div class="problem-label">Input</div>
+              <div class="problem-content">
+                <code>arr = [2, 5, 8, 10]</code>
+              </div>
+            </div>
+
+            <div class="problem-section">
+              <div class="problem-label">Output</div>
+              <div class="problem-content">
+                <code>Sorted</code>
+              </div>
+            </div>
+
+            <div class="problem-section">
+              <div class="problem-label">Explanation</div>
+              <div class="problem-content">
+                Every element is smaller than the next one, indicating the array is sorted in ascending order.
+              </div>
+            </div>
+
+            <div class="problem-section">
+              <div class="problem-label">Requirements</div>
+              <ul class="requirements-list">
+                <li>Write a C function that checks if an array is sorted in ascending order</li>
+                <li>Return 1 (true) if sorted, 0 (false) if not sorted</li>
+                <li>Handle edge cases like empty arrays or single element arrays</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- File Upload Section -->
+          <div class="upload-section">
+            <form id="c-upload-form" class="upload-form">
+              <div class="file-input-wrapper">
+                <input type="file" id="cfile" name="cfile" accept=".c" required />
+                <div class="file-input-label">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+                  </svg>
+                  <span id="file-name">Choose a .c file</span>
+                </div>
+              </div>
+              <button type="submit" class="btn primary" id="upload-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg> Submit Solution
+              </button>
+              <span id="upload-msg" class="upload-msg"></span>
+            </form>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div id="loading-indicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <span class="loading-text">Evaluating your solution...</span>
+          </div>
+
+          <!-- Success Result Card -->
+          <div id="result-success" class="result-card success hidden">
+            <div class="result-card-header">
+              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg></div>
+              <div>
+                <div class="result-title">Submitted Successfully!</div>
+              </div>
+            </div>
+            <div class="result-message">
+              Your solution has been submitted and evaluated. Your instructor will review the detailed results.
+            </div>
+          </div>
+
+          <!-- Failed Result Card -->
+          <div id="result-failed" class="result-card failed hidden">
+            <div class="result-card-header">
+              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="3">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></div>
+              <div>
+                <div class="result-title">Submission Rejected</div>
+              </div>
+            </div>
+            <div class="result-message">
+              Your solution did not pass the evaluation. Please review your code and try again.
+            </div>
+          </div>
+
+          <!-- Error Card -->
+          <div id="result-error" class="result-card failed hidden">
+            <div class="result-card-header">
+              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg></div>
+              <div>
+                <div class="result-title">Submission Error</div>
+              </div>
+            </div>
+            <div class="result-message" id="error-message">
+              An error occurred while processing your submission.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Get username from session and display
+    fetch('/get-user-info')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          document.getElementById('username-display').textContent = data.username;
+          document.getElementById('user-avatar').textContent = data.username.charAt(0).toUpperCase();
+        }
+      })
+      .catch(() => { });
+
+    // Logout handler
+    document.getElementById('btn-logout').onclick = function () {
+      fetch('/logout').then(() => {
+        window.location.href = '/login.html';
+      });
+    };
+
+    // File input display
+    document.getElementById('cfile').addEventListener('change', function () {
+      const fileName = this.files[0] ? this.files[0].name : 'Choose a .c file';
+      document.getElementById('file-name').textContent = fileName;
+    });
+
+    // File upload handler
+    document.getElementById('c-upload-form').onsubmit = async function (e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('cfile');
+      const msg = document.getElementById('upload-msg');
+      const uploadBtn = document.getElementById('upload-btn');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const resultSuccess = document.getElementById('result-success');
+      const resultFailed = document.getElementById('result-failed');
+      const resultError = document.getElementById('result-error');
+
+      // Extract the problem statement from the page
+      const problemTitle = document.querySelector('.problem-header h3').textContent;
+      const problemTextElement = document.getElementById('problem-text');
+      const problemStatement = `${problemTitle}\n\n${problemTextElement.innerText}`;
+
+      // Reset states
+      msg.textContent = '';
+      msg.className = 'upload-msg';
+      resultSuccess.classList.add('hidden');
+      resultFailed.classList.add('hidden');
+      resultError.classList.add('hidden');
+
+      if (!fileInput.files.length) {
+        msg.textContent = 'Please select a .c file.';
+        msg.className = 'upload-msg error';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      if (!file.name.endsWith('.c')) {
+        msg.textContent = 'Only .c files are allowed!';
+        msg.className = 'upload-msg error';
+        return;
+      }
+
+      // Show loading state
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Evaluating...';
+      loadingIndicator.classList.remove('hidden');
+
+      const formData = new FormData();
+      formData.append('cfile', file);
+      formData.append('problem', problemStatement);
+
+      try {
+        const response = await fetch('/upload-c', {
+          method: 'POST',
+          body: formData,
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          // Show success or rejected based on status
+          if (result.status === 'accepted') {
+            resultSuccess.classList.remove('hidden');
+          } else {
+            resultFailed.classList.remove('hidden');
+          }
+        } else {
+          document.getElementById('error-message').textContent = result.message || 'Upload failed.';
+          resultError.classList.remove('hidden');
+        }
+      } catch (err) {
+        document.getElementById('error-message').textContent = 'Error connecting to server.';
+        resultError.classList.remove('hidden');
+      } finally {
+        // Reset button state
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Submit Solution';
+        loadingIndicator.classList.add('hidden');
+        // Reset file input
+        fileInput.value = '';
+        document.getElementById('file-name').textContent = 'Choose a .c file';
+      }
+    };
+  </script>
+</body>
+
+</html>

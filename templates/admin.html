@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Data Structure Evaluator - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <script>
+        // Check if the user is authenticated and is admin
+        fetch('/admin-check')
+            .then((response) => {
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login.html';
+            });
+    </script>
+
+    <header class="topbar">
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            Data Structure Evaluator Admin
+        </div>
+        <div class="role">
+            <div class="user-badge">
+                <div class="avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">A</div>
+                <span>Administrator</span>
+            </div>
+            <button id="btn-logout" class="btn secondary">Log Out</button>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="vertical-align: middle; margin-right: 8px;">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>Admin Dashboard</h1>
+            <p>Monitor student submissions and view detailed evaluation reports</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-value" id="total-submissions">0</div>
+                <div class="stat-label">Total Submissions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-students">0</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accepted-count">0</div>
+                <div class="stat-label">Accepted Solutions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="rejected-count">0</div>
+                <div class="stat-label">Rejected Solutions</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="container" style="padding: 0; max-width: none;">
+            <!-- Student List Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                            </svg> Students</h3>
+                    </div>
+                    <ul id="student-list" class="student-list">
+                        <!-- Students will be loaded here -->
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Submissions Table -->
+            <section class="content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title" id="submissions-title">All Submissions</div>
+                            <div class="panel-subtitle" id="submissions-subtitle">Click on a student to filter their
+                                submissions</div>
+                        </div>
+                        <button class="btn primary" id="btn-show-all">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right: 6px;">
+                                <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                            </svg>
+                            All Student Submissions
+                        </button>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Problem</th>
+                                <th>File</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                                <th>Submitted</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="submissions-table">
+                            <!-- Submissions will be loaded here -->
+                        </tbody>
+                    </table>
+
+                    <div id="no-submissions" class="text-center text-muted mt-4 hidden" style="padding: 40px;">
+                        No submissions found.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Submission Detail Modal -->
+    <div id="detail-modal" class="modal hidden">
+        <div class="modal-card" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align: middle; margin-right: 6px;">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>Submission Details</h3>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+
+            <div id="modal-content">
+                <!-- Submission Info -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div>
+                        <div class="form-label">Student</div>
+                        <div id="detail-student" style="font-weight: 600; color: var(--text-primary);"></div>
+                    </div>
+                    <div>
+                        <div class="form-label">Problem</div>
+                        <div id="detail-problem" style="font-weight: 600; color: var(--text-primary);"></div>
+                    </div>
+                    <div>
+                        <div class="form-label">Status</div>
+                        <div id="detail-status"></div>
+                    </div>
+                    <div>
+                        <div class="form-label">Score</div>
+                        <div id="detail-score" style="font-weight: 600; font-size: 1.25rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Code Preview -->
+                <div style="margin-bottom: 20px;">
+                    <div class="form-label" style="margin-bottom: 8px;">Submitted Code</div>
+                    <pre class="code-preview" id="detail-code"></pre>
+                </div>
+
+                <!-- Evaluation Report -->
+                <div class="evaluation-report">
+                    <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                        </svg>AI Evaluation Report</h4>
+                    <div class="evaluation-content" id="detail-evaluation"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logout handler
+        document.getElementById('btn-logout').onclick = function () {
+            fetch('/logout').then(() => {
+                window.location.href = '/login.html';
+            });
+        };
+
+        // Close modal
+        document.getElementById('close-modal').onclick = function () {
+            document.getElementById('detail-modal').classList.add('hidden');
+        };
+
+        // Click outside modal to close
+        document.getElementById('detail-modal').onclick = function (e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        };
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Load students
+                const studentsRes = await fetch('/api/admin/students');
+                const students = await studentsRes.json();
+
+                document.getElementById('total-students').textContent = students.length;
+
+                const studentList = document.getElementById('student-list');
+                studentList.innerHTML = students.map(s => `
+          <li class="student-item" data-username="${s.register_no}">
+            <div class="student-info">
+              <div class="student-avatar">${s.username.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="student-name">${s.username}</div>
+                <div class="student-meta">${s.register_no || ''}</div>
+              </div>
+            </div>
+          </li>
+        `).join('');
+
+                // Add click handlers to students
+                document.querySelectorAll('.student-item').forEach(item => {
+                    item.onclick = function () {
+                        // We still filter by the actual username (reg no)
+                        const username = this.dataset.username;
+                        loadSubmissions(username);
+                    };
+                });
+
+                // Load all submissions
+                loadSubmissions();
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+            }
+        }
+
+        // Load submissions (optionally filtered by username)
+        async function loadSubmissions(username = null) {
+            try {
+                // IMPORTANT: The backend 'username' parameter expects the register number!
+                // But the 'username' variable here might be coming from a click, which is the reg no.
+                const url = username
+                    ? `/api/admin/submissions?username=${encodeURIComponent(username)}`
+                    : '/api/admin/submissions';
+
+                const res = await fetch(url);
+                const submissions = await res.json();
+
+                // Update title
+                if (username) {
+                    // Find name if possible, or just show reg no
+                    document.getElementById('submissions-title').textContent = `${username}'s Submissions`;
+                    document.getElementById('submissions-subtitle').textContent = `Showing ${submissions.length} submission(s)`;
+                } else {
+                    document.getElementById('submissions-title').textContent = 'All Submissions';
+                    document.getElementById('submissions-subtitle').textContent = `Showing ${submissions.length} total submission(s)`;
+                }
+
+                // Update stats
+                document.getElementById('total-submissions').textContent = submissions.length;
+                const accepted = submissions.filter(s => s.status === 'accepted').length;
+                const rejected = submissions.filter(s => s.status === 'rejected').length;
+                document.getElementById('accepted-count').textContent = accepted;
+                document.getElementById('rejected-count').textContent = rejected;
+
+                // Render table
+                const tbody = document.getElementById('submissions-table');
+                const noSubmissions = document.getElementById('no-submissions');
+
+                if (submissions.length === 0) {
+                    tbody.innerHTML = '';
+                    noSubmissions.classList.remove('hidden');
+                } else {
+                    noSubmissions.classList.add('hidden');
+                    tbody.innerHTML = submissions.map(s => `
+            <tr>
+              <td class="student-name">
+                <div>${s.username}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">${s.register_no || ''}</div>
+              </td>
+              <td>${s.problem_title || 'N/A'}</td>
+              <td>${s.filename}</td>
+              <td>
+                <span class="status-badge ${s.status === 'accepted' ? 'success' : 'failed'}">
+                  ${s.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                </span>
+              </td>
+              <td>${s.score || 0}/100</td>
+              <td>${formatDate(s.submitted_at)}</td>
+              <td>
+                <button class="btn secondary action-btn" onclick="viewSubmission(${s.id})">
+                  View Report
+                </button>
+              </td>
+            </tr>
+          `).join('');
+                }
+            } catch (err) {
+                console.error('Error loading submissions:', err);
+            }
+        }
+
+        // View submission detail
+        async function viewSubmission(id) {
+            try {
+                const res = await fetch(`/api/admin/submission/${id}`);
+                const sub = await res.json();
+
+                document.getElementById('detail-student').textContent = sub.username;
+                document.getElementById('detail-problem').textContent = sub.problem_title || 'N/A';
+                document.getElementById('detail-status').innerHTML = `
+          <span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}">
+            ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+          </span>
+        `;
+                document.getElementById('detail-score').textContent = `${sub.score || 0}/100`;
+                document.getElementById('detail-code').textContent = sub.file_content || 'No code available';
+                document.getElementById('detail-evaluation').innerHTML = formatEvaluation(sub.evaluation || 'No evaluation available');
+
+                document.getElementById('detail-modal').classList.remove('hidden');
+            } catch (err) {
+                console.error('Error loading submission:', err);
+                alert('Failed to load submission details');
+            }
+        }
+
+        // Show all submissions
+        document.getElementById('btn-show-all').onclick = function () {
+            loadSubmissions();
+        };
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Format evaluation text to HTML
+        function formatEvaluation(text) {
+            if (!text) return 'No evaluation available';
+            // Convert **bold** to <strong>
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary);">$1</strong>');
+            // Convert headers
+            text = text.replace(/^## (.*)$/gm, '<h4 style="color: var(--text-primary); margin: 16px 0 8px 0;">$1</h4>');
+            text = text.replace(/^### (.*)$/gm, '<h5 style="color: var(--text-secondary); margin: 12px 0 6px 0;">$1</h5>');
+            // Convert bullet points
+            text = text.replace(/^- (.*)$/gm, '<div style="padding-left: 16px; margin: 4px 0;">• $1</div>');
+            // Highlight scores
+            text = text.replace(/(\d+)\/100/g, '<span style="color: var(--success); font-weight: 600;">$1/100</span>');
+            // Highlight PASS/FAIL
+            text = text.replace(/\bPASS\b/g, '<span class="status-badge success">✓ PASS</span>');
+            text = text.replace(/\bFAIL\b/g, '<span class="status-badge failed">✗ FAIL</span>');
+            return text;
+        }
+
+        // Initialize
+        loadDashboard();
+    </script>
+</body>
+
+</html>
