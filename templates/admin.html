@@ -48,6 +48,13 @@
                     <path d="M18 20V10M12 20V4M6 20v-6" />
                 </svg>Admin Dashboard</h1>
             <p>Monitor student submissions and view detailed evaluation reports</p>
+            <button class="btn danger" id="btn-reset-submissions" style="margin-top: 10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                    <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
+                </svg>
+                Reset All Submissions
+            </button>
+            <span id="reset-msg" style="margin-left: 16px; color: #dc2626; font-weight: 500;"></span>
         </div>
 
         <!-- Stats Grid -->
@@ -188,6 +195,28 @@
     </div>
 
     <script>
+        // Reset submissions handler (admin only)
+        document.getElementById('btn-reset-submissions').onclick = async function () {
+            if (!confirm('Are you sure you want to delete ALL submissions? This cannot be undone.')) return;
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+            document.getElementById('reset-msg').textContent = '';
+            try {
+                const res = await fetch('/api/admin/reset-submissions', { method: 'POST' });
+                if (res.ok) {
+                    document.getElementById('reset-msg').textContent = 'All submissions have been reset.';
+                    loadDashboard();
+                } else {
+                    document.getElementById('reset-msg').textContent = 'Failed to reset submissions.';
+                }
+            } catch (err) {
+                document.getElementById('reset-msg').textContent = 'Error connecting to server.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" /></svg> Reset All Submissions';
+            }
+        };
         // Logout handler
         document.getElementById('btn-logout').onclick = function () {
             fetch('/logout').then(() => {

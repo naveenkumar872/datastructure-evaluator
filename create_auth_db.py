@@ -245,6 +245,13 @@ def get_student_submissions(username):
         'submitted_at': s[5]
     } for s in submissions]
 
+# ADMIN: Reset all submissions
+def reset_all_submissions():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM submissions')
+    conn.commit()
+    conn.close()
 
 if __name__ == '__main__':
     create_database()
