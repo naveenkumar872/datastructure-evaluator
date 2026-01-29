@@ -193,9 +193,21 @@ def upload_c_file():
     }), 200
 
 
+
 # ============================================
 # Admin API Routes
 # ============================================
+
+@app.route('/api/admin/reset-submissions', methods=['POST'])
+def api_admin_reset_submissions():
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    try:
+        from create_auth_db import reset_all_submissions
+        reset_all_submissions()
+        return jsonify({'success': True, 'message': 'All submissions deleted.'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/admin/students')
 def api_admin_students():
