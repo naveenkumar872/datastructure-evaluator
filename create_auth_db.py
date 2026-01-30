@@ -13,7 +13,11 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 IS_POSTGRES = bool(DATABASE_URL)
 
 if IS_POSTGRES:
-    import psycopg2
+    try:
+        import psycopg2
+    except ImportError:
+        print("Warning: psycopg2 not installed. Falling back to SQLite.")
+        IS_POSTGRES = False
 
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
@@ -52,7 +56,8 @@ def create_database():
             password TEXT NOT NULL,
             role TEXT DEFAULT 'student',
             created_at {timestamp_default},
-            name TEXT
+            name TEXT,
+            email TEXT
         )
     ''')
 
@@ -68,6 +73,7 @@ def create_database():
             status TEXT DEFAULT 'pending',
             evaluation TEXT,
             score INTEGER DEFAULT 0,
+            ai_score INTEGER DEFAULT 0,
             submitted_at {timestamp_default},
             evaluated_at TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
@@ -117,19 +123,19 @@ def get_user_role(username):
     return result[0] if result else 'student'
 
 
-def save_submission(user_id, username, problem_title, filename, file_content, status, evaluation, score):
+def save_submission(user_id, username, problem_title, filename, file_content, status, evaluation, score, ai_score=0):
     """Save a student submission to the database"""
     conn = get_db_connection()
     cursor = conn.cursor()
     ph = get_placeholder()
     
     cursor.execute(f'''
-        INSERT INTO submissions (user_id, username, problem_title, filename, file_content, status, evaluation, score, evaluated_at)
-        VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}) RETURNING id
+        INSERT INTO submissions (user_id, username, problem_title, filename, file_content, status, evaluation, score, ai_score, evaluated_at)
+        VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}) RETURNING id
     ''' if IS_POSTGRES else f'''
-        INSERT INTO submissions (user_id, username, problem_title, filename, file_content, status, evaluation, score, evaluated_at)
-        VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})
-    ''', (user_id, username, problem_title, filename, file_content, status, evaluation, score, datetime.now()))
+        INSERT INTO submissions (user_id, username, problem_title, filename, file_content, status, evaluation, score, ai_score, evaluated_at)
+        VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})
+    ''', (user_id, username, problem_title, filename, file_content, status, evaluation, score, ai_score, datetime.now()))
     
     if IS_POSTGRES:
         submission_id = cursor.fetchone()[0]
@@ -178,7 +184,7 @@ def get_submission_detail(submission_id):
     # To be safe across DBs, let's explicitly list columns or handle index carefully
     # Postgres returns raw tuples similar to sqlite
     cursor.execute(f'''
-        SELECT s.id, s.user_id, s.username, s.problem_title, s.filename, s.file_content, s.status, s.evaluation, s.score, s.submitted_at, s.evaluated_at, u.name 
+        SELECT s.id, s.user_id, s.username, s.problem_title, s.filename, s.file_content, s.status, s.evaluation, s.score, s.ai_score, s.submitted_at, s.evaluated_at, u.name 
         FROM submissions s 
         JOIN users u ON s.username = u.username 
         WHERE s.id = {ph}
@@ -189,11 +195,11 @@ def get_submission_detail(submission_id):
     if s:
         # Columns mapped to indices:
         # 0:id, 1:user_id, 2:username, 3:problem_title, 4:filename, 5:file_content, 
-        # 6:status, 7:evaluation, 8:score, 9:submitted_at, 10:evaluated_at, 11:name
+        # 6:status, 7:evaluation, 8:score, 9:ai_score, 10:submitted_at, 11:evaluated_at, 12:name
         return {
             'id': s[0],
             'user_id': s[1],
-            'username': s[11] if s[11] else s[2], # Name from users table
+            'username': s[12] if s[12] else s[2], # Name from users table
             'register_no': s[2], # Username from submissions table
             'problem_title': s[3],
             'filename': s[4],
@@ -201,8 +207,9 @@ def get_submission_detail(submission_id):
             'status': s[6],
             'evaluation': s[7],
             'score': s[8],
-            'submitted_at': s[9],
-            'evaluated_at': s[10]
+            'ai_score': s[9] if s[9] else 0,
+            'submitted_at': s[10],
+            'evaluated_at': s[11]
         }
     return None
 
@@ -211,11 +218,11 @@ def get_all_students():
     """Get all students for admin view"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, username, created_at, name FROM users WHERE role = 'student' ORDER BY username")
+    cursor.execute("SELECT id, username, created_at, name, email FROM users WHERE role = 'student' ORDER BY username")
     students = cursor.fetchall()
     conn.close()
     
-    return [{'id': s[0], 'username': s[3] if s[3] else s[1], 'register_no': s[1], 'created_at': s[2]} for s in students]
+    return [{'id': s[0], 'username': s[3] if s[3] else s[1], 'register_no': s[1], 'created_at': s[2], 'email': s[4]} for s in students]
 
 
 def get_student_submissions(username):
@@ -253,5 +260,121 @@ def reset_all_submissions():
     conn.commit()
     conn.close()
 
+
+def get_student_email(username):
+    """Get student email by username (register number)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    cursor.execute(f'SELECT email FROM users WHERE username = {ph}', (username,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result and result[0] else None
+
+
+def get_submissions_by_time_range(hours):
+    """Get all submissions within the last X hours"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    if IS_POSTGRES:
+        time_filter = f"submitted_at >= NOW() - INTERVAL '{hours} hours'"
+    else:
+        time_filter = f"submitted_at >= datetime('now', '-{hours} hours')"
+    
+    cursor.execute(f'''
+        SELECT s.id, s.username, s.problem_title, s.filename, s.status, s.score, 
+               s.submitted_at, s.evaluation, s.file_content, u.name, u.email
+        FROM submissions s
+        JOIN users u ON s.username = u.username
+        WHERE {time_filter}
+        ORDER BY s.username, s.submitted_at DESC
+    ''')
+    submissions = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        'id': s[0],
+        'register_no': s[1],
+        'problem_title': s[2],
+        'filename': s[3],
+        'status': s[4],
+        'score': s[5],
+        'submitted_at': s[6],
+        'evaluation': s[7],
+        'file_content': s[8],
+        'name': s[9] if s[9] else s[1],
+        'email': s[10]
+    } for s in submissions]
+
+
+def add_email_column_if_missing():
+    """Add email column to users table if it doesn't exist (migration helper)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        if IS_POSTGRES:
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT")
+        else:
+            # SQLite doesn't have IF NOT EXISTS for columns, so we check first
+            cursor.execute("PRAGMA table_info(users)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'email' not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        conn.commit()
+        print("Email column added/verified.")
+    except Exception as e:
+        print(f"Note: {e}")
+    finally:
+        conn.close()
+
+
+def add_ai_score_column_if_missing():
+    """Add ai_score column to submissions table if it doesn't exist (migration helper)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        if IS_POSTGRES:
+            cursor.execute("ALTER TABLE submissions ADD COLUMN IF NOT EXISTS ai_score INTEGER DEFAULT 0")
+        else:
+            cursor.execute("PRAGMA table_info(submissions)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'ai_score' not in columns:
+                cursor.execute("ALTER TABLE submissions ADD COLUMN ai_score INTEGER DEFAULT 0")
+        conn.commit()
+        print("AI score column added/verified.")
+    except Exception as e:
+        print(f"Note: {e}")
+    finally:
+        conn.close()
+
+
+def get_all_submissions_with_content():
+    """Get all submissions with file content for similarity checking"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT s.id, s.username, s.problem_title, s.file_content, u.name
+        FROM submissions s
+        JOIN users u ON s.username = u.username
+        ORDER BY s.submitted_at DESC
+    ''')
+    submissions = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        'id': s[0],
+        'username': s[1],
+        'problem_title': s[2],
+        'file_content': s[3],
+        'name': s[4] if s[4] else s[1]
+    } for s in submissions]
+
+
 if __name__ == '__main__':
     create_database()
+    add_email_column_if_missing()
+    add_ai_score_column_if_missing()

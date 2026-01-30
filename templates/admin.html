@@ -48,13 +48,23 @@
                     <path d="M18 20V10M12 20V4M6 20v-6" />
                 </svg>Admin Dashboard</h1>
             <p>Monitor student submissions and view detailed evaluation reports</p>
-            <button class="btn danger" id="btn-reset-submissions" style="margin-top: 10px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                    <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
-                </svg>
-                Reset All Submissions
-            </button>
-            <span id="reset-msg" style="margin-left: 16px; color: #dc2626; font-weight: 500;"></span>
+            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button class="btn primary" id="btn-export-report">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Export Report
+                </button>
+                <button class="btn danger" id="btn-reset-submissions">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                        <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
+                    </svg>
+                    Reset All Submissions
+                </button>
+                <span id="reset-msg" style="margin-left: 8px; color: #dc2626; font-weight: 500;"></span>
+            </div>
         </div>
 
         <!-- Stats Grid -->
@@ -175,6 +185,51 @@
                     </div>
                 </div>
 
+                <!-- AI Detection & Similarity Stats -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; background: var(--bg-secondary); padding: 16px; border-radius: 8px;">
+                    <div>
+                        <div class="form-label" style="display: flex; align-items: center; gap: 6px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                            AI Detection
+                        </div>
+                        <div id="detail-ai-score" style="font-weight: 600; font-size: 1.1rem;"></div>
+                    </div>
+                    <div>
+                        <div class="form-label" style="display: flex; align-items: center; gap: 6px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                            </svg>
+                            Similar Submissions
+                            <button id="btn-view-similar" class="btn secondary" style="padding: 2px 8px; font-size: 11px; margin-left: auto;" title="View students with similar code">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                                View
+                            </button>
+                        </div>
+                        <div id="detail-similarity" style="font-weight: 600; font-size: 1.1rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Similar Students Modal (hidden by default) -->
+                <div id="similar-students-panel" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; color: #92400e; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        Students with Similar Code
+                    </div>
+                    <div id="similar-students-list" style="max-height: 150px; overflow-y: auto;"></div>
+                </div>
+
                 <!-- Code Preview -->
                 <div style="margin-bottom: 20px;">
                     <div class="form-label" style="margin-bottom: 8px;">Submitted Code</div>
@@ -195,6 +250,35 @@
     </div>
 
     <script>
+        // Export Report handler
+        document.getElementById('btn-export-report').onclick = async function () {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg> Exporting...';
+            
+            try {
+                const res = await fetch('/api/admin/export-report');
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'submissions_report.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    alert('Failed to export report');
+                }
+            } catch (err) {
+                alert('Error exporting report');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg> Export Report';
+            }
+        };
+
         // Reset submissions handler (admin only)
         document.getElementById('btn-reset-submissions').onclick = async function () {
             if (!confirm('Are you sure you want to delete ALL submissions? This cannot be undone.')) return;
@@ -340,9 +424,13 @@
             }
         }
 
+        // Store current submission ID for similarity lookup
+        let currentSubmissionId = null;
+
         // View submission detail
         async function viewSubmission(id) {
             try {
+                currentSubmissionId = id;
                 const res = await fetch(`/api/admin/submission/${id}`);
                 const sub = await res.json();
 
@@ -354,6 +442,20 @@
           </span>
         `;
                 document.getElementById('detail-score').textContent = `${sub.score || 0}/100`;
+                
+                // AI Detection Score
+                const aiScore = sub.ai_score || 0;
+                const aiColor = aiScore >= 70 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
+                const aiLabel = aiScore >= 70 ? 'Likely AI' : aiScore >= 40 ? 'Uncertain' : 'Likely Human';
+                document.getElementById('detail-ai-score').innerHTML = `
+                    <span style="color: ${aiColor};">${aiScore}%</span>
+                    <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">${aiLabel}</span>
+                `;
+                
+                // Reset similarity panel
+                document.getElementById('detail-similarity').innerHTML = '<span style="color: var(--text-muted);">Click View to check</span>';
+                document.getElementById('similar-students-panel').style.display = 'none';
+                
                 document.getElementById('detail-code').textContent = sub.file_content || 'No code available';
                 document.getElementById('detail-evaluation').innerHTML = formatEvaluation(sub.evaluation || 'No evaluation available');
 
@@ -363,6 +465,53 @@
                 alert('Failed to load submission details');
             }
         }
+
+        // View similar submissions button handler
+        document.getElementById('btn-view-similar').onclick = async function() {
+            if (!currentSubmissionId) return;
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            
+            try {
+                const res = await fetch(`/api/admin/submission/${currentSubmissionId}/similar`);
+                const similar = await res.json();
+                
+                const similarityDiv = document.getElementById('detail-similarity');
+                const panelDiv = document.getElementById('similar-students-panel');
+                const listDiv = document.getElementById('similar-students-list');
+                
+                if (similar.length === 0) {
+                    similarityDiv.innerHTML = '<span style="color: #22c55e;">✓ No similar code found</span>';
+                    panelDiv.style.display = 'none';
+                } else {
+                    const maxSim = similar[0].similarity;
+                    const simColor = maxSim >= 90 ? '#dc2626' : maxSim >= 70 ? '#f59e0b' : '#22c55e';
+                    similarityDiv.innerHTML = `<span style="color: ${simColor};">${similar.length} match${similar.length > 1 ? 'es' : ''} (up to ${maxSim}%)</span>`;
+                    
+                    listDiv.innerHTML = similar.map(s => `
+                        <div style="padding: 8px; background: white; border-radius: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${s.name}</strong>
+                                <span style="color: var(--text-muted); font-size: 12px; margin-left: 8px;">${s.username}</span>
+                            </div>
+                            <div style="font-weight: 600; color: ${s.similarity >= 90 ? '#dc2626' : '#f59e0b'};">
+                                ${s.similarity}% match
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    panelDiv.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Error checking similarity:', err);
+                document.getElementById('detail-similarity').innerHTML = '<span style="color: #dc2626;">Error checking</span>';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> View`;
+            }
+        };
 
         // Show all submissions
         document.getElementById('btn-show-all').onclick = function () {

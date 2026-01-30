@@ -3,9 +3,10 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from create_auth_db import (
     validate_user, get_user_role, save_submission, 
     get_all_submissions, get_submission_detail, 
-    get_all_students, get_student_submissions
+    get_all_students, get_student_submissions,
+    get_submissions_by_time_range, get_all_submissions_with_content
 )
-from evaluator import evaluate_uploaded_content
+from evaluator import evaluate_uploaded_content, find_similar_submissions
 import os
 import re
 from werkzeug.utils import secure_filename
@@ -243,6 +244,30 @@ def api_admin_submission_detail(submission_id):
     if submission:
         return jsonify(submission)
     return jsonify({'error': 'Not found'}), 404
+
+
+@app.route('/api/admin/submission/<int:submission_id>/similar')
+def api_admin_similar_submissions(submission_id):
+    """Find submissions with similar code to the given submission"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify([]), 401
+    
+    submission = get_submission_detail(submission_id)
+    if not submission or not submission.get('file_content'):
+        return jsonify([]), 404
+    
+    # Get all submissions for comparison
+    all_submissions = get_all_submissions_with_content()
+    
+    # Find similar submissions (excluding the current one)
+    similar = find_similar_submissions(
+        submission['file_content'], 
+        all_submissions, 
+        current_submission_id=submission_id,
+        threshold=70.0
+    )
+    
+    return jsonify(similar)
 
 
 # ============================================
