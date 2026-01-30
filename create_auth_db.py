@@ -272,10 +272,23 @@ def get_student_email(username):
     return result[0] if result and result[0] else None
 
 
-def get_submissions_by_time_range(hours):
-    """Get all submissions within the last X hours"""
+def get_submissions_by_time_range(time_range):
+    """Get all submissions within the specified time range
+    time_range: '1h', '2h', '5h', '12h', '24h'
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    # Parse time range to hours
+    time_map = {
+        '1h': 1,
+        '2h': 2,
+        '5h': 5,
+        '12h': 12,
+        '24h': 24,
+        '48h': 48
+    }
+    hours = time_map.get(time_range, 24)  # Default to 24 hours
     
     if IS_POSTGRES:
         time_filter = f"submitted_at >= NOW() - INTERVAL '{hours} hours'"
@@ -290,6 +303,7 @@ def get_submissions_by_time_range(hours):
         WHERE {time_filter}
         ORDER BY s.username, s.submitted_at DESC
     ''')
+    
     submissions = cursor.fetchall()
     conn.close()
     

@@ -270,6 +270,106 @@ def api_admin_similar_submissions(submission_id):
     return jsonify(similar)
 
 
+@app.route('/api/admin/send-reports/preview', methods=['POST'])
+def api_admin_send_reports_preview():
+    """Preview which students will receive reports based on time range"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    time_range = data.get('timeRange', 'all')  # 1h, 6h, 24h, 7d, 30d, all
+    
+    # Get submissions based on time range
+    submissions = get_submissions_by_time_range(time_range)
+    
+    # Group by student
+    students_data = {}
+    for sub in submissions:
+        reg_no = sub.get('register_no') or sub.get('username')
+        if reg_no not in students_data:
+            students_data[reg_no] = {
+                'name': sub.get('name', sub.get('username', reg_no)),
+                'email': sub.get('email', ''),
+                'register_no': reg_no,
+                'submissions': []
+            }
+        students_data[reg_no]['submissions'].append(sub)
+    
+    # Build preview list
+    preview = []
+    for reg_no, data in students_data.items():
+        preview.append({
+            'register_no': reg_no,
+            'name': data['name'],
+            'email': data['email'] or 'No email',
+            'has_email': bool(data['email']),
+            'submission_count': len(data['submissions']),
+            'accepted': sum(1 for s in data['submissions'] if s['status'] == 'accepted'),
+            'avg_score': sum(s.get('score', 0) for s in data['submissions']) / len(data['submissions']) if data['submissions'] else 0
+        })
+    
+    # Sort by name
+    preview.sort(key=lambda x: x['name'])
+    
+    return jsonify({
+        'total_students': len(preview),
+        'with_email': sum(1 for p in preview if p['has_email']),
+        'without_email': sum(1 for p in preview if not p['has_email']),
+        'total_submissions': len(submissions),
+        'students': preview
+    })
+
+
+@app.route('/api/admin/send-reports', methods=['POST'])
+def api_admin_send_reports():
+    """Send reports to students based on time range"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    from email_utils import send_bulk_reports, is_email_configured
+    
+    if not is_email_configured():
+        return jsonify({
+            'success': False,
+            'message': 'Email not configured. Set SMTP_USER and SMTP_PASSWORD in environment variables.'
+        }), 400
+    
+    data = request.get_json()
+    time_range = data.get('timeRange', 'all')
+    
+    # Get submissions based on time range
+    submissions = get_submissions_by_time_range(time_range)
+    
+    if not submissions:
+        return jsonify({
+            'success': False,
+            'message': 'No submissions found for the selected time range.'
+        }), 400
+    
+    # Group by student for bulk sending
+    students_data = {}
+    for sub in submissions:
+        reg_no = sub.get('register_no') or sub.get('username')
+        if reg_no not in students_data:
+            students_data[reg_no] = {
+                'name': sub.get('name', sub.get('username', reg_no)),
+                'email': sub.get('email', ''),
+                'submissions': []
+            }
+        students_data[reg_no]['submissions'].append(sub)
+    
+    # Send bulk reports
+    results = send_bulk_reports(students_data)
+    
+    return jsonify({
+        'success': True,
+        'sent': results['sent'],
+        'failed': results['failed'],
+        'skipped': results['skipped'],
+        'details': results['details']
+    })
+
+
 # ============================================
 # Static Files
 # ============================================
