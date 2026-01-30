@@ -50,36 +50,36 @@
             </svg> Problems</h3>
         </div>
         <ul id="problem-list" class="student-list">
-          <li class="student-item" style="cursor: default;">
+          <li class="student-item" id="sidebar-item-1" onclick="selectProblem(1)">
             <div class="student-info">
-              <div class="student-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">1</div>
+              <div class="student-avatar">1</div>
               <div>
                 <div class="student-name">Check Array is Sorted</div>
                 <div class="student-meta">Data Structures - Day 1</div>
               </div>
             </div>
           </li>
-          <li class="student-item" style="cursor: default;">
+          <li class="student-item" id="sidebar-item-2" onclick="selectProblem(2)">
             <div class="student-info">
-              <div class="student-avatar" style="background: linear-gradient(135deg, #f59e42, #fbbf24);">2</div>
+              <div class="student-avatar">2</div>
               <div>
                 <div class="student-name">Find Smallest Number Greater Than Key</div>
                 <div class="student-meta">Data Structures - Day 1</div>
               </div>
             </div>
           </li>
-          <li class="student-item" style="cursor: default;">
+          <li class="student-item" id="sidebar-item-3" onclick="selectProblem(3)">
             <div class="student-info">
-              <div class="student-avatar" style="background: linear-gradient(135deg, #6366f1, #818cf8);">3</div>
+              <div class="student-avatar">3</div>
               <div>
                 <div class="student-name">Every Number Appears Twice Except One</div>
                 <div class="student-meta">Data Structures - Day 1</div>
               </div>
             </div>
           </li>
-          <li class="student-item" style="cursor: default;">
+          <li class="student-item" id="sidebar-item-4" onclick="selectProblem(4)">
             <div class="student-info">
-              <div class="student-avatar" style="background: linear-gradient(135deg, #ec4899, #f472b6);">4</div>
+              <div class="student-avatar">4</div>
               <div>
                 <div class="student-name">Return Index of Element (Ignore First Occurrence)</div>
                 <div class="student-meta">Data Structures - Day 1</div>
@@ -91,8 +91,18 @@
     </aside>
 
     <section class="content">
+      <!-- Empty State -->
+      <div id="empty-state" class="panel"
+        style="text-align: center; padding: 64px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+        <div style="font-size: 3rem; margin-bottom: 24px; opacity: 0.5;">👈</div>
+        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;">Select a
+          Problem</h2>
+        <p style="color: var(--text-muted); max-width: 400px;">Please select a problem from the sidebar on the left to
+          view the details and submit your solution.</p>
+      </div>
+
       <!-- Problem Card 1 -->
-      <div class="problem-card">
+      <div class="problem-card hidden" id="problem-card-1">
         <div class="problem-header">
           <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
@@ -160,41 +170,25 @@
             <div class="spinner"></div>
             <span class="loading-text">Evaluating your solution...</span>
           </div>
-          <div id="result-success" class="result-card success hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <div><div class="result-title">Submitted Successfully!</div></div>
-            </div>
-            <div class="result-message">Your solution has been submitted and evaluated. Your instructor will review the detailed results.</div>
-          </div>
-          <div id="result-failed" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></div>
-              <div><div class="result-title">Submission Rejected</div></div>
-            </div>
-            <div class="result-message">Your solution did not pass the evaluation. Please review your code and try again.</div>
-          </div>
-          <div id="result-error" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></div>
-              <div><div class="result-title">Submission Error</div></div>
-            </div>
-            <div class="result-message" id="error-message">An error occurred while processing your submission.</div>
-          </div>
+
         </div>
       </div>
 
       <!-- Problem Card 2 -->
-      <div class="problem-card">
+      <div class="problem-card hidden" id="problem-card-2">
         <div class="problem-header">
-          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg> Data Structure - Day 1</h2>
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+            </svg> Data Structure - Day 1</h2>
           <h3>2. Find Smallest Number Greater Than Key</h3>
         </div>
         <div class="problem-body">
           <div id="problem-text-2">
             <div class="problem-section">
               <div class="problem-label">Problem Statement</div>
-              <div class="problem-content">Find the smallest number in the array that is greater than the given key.</div>
+              <div class="problem-content">Find the smallest number in the array that is greater than the given key.
+              </div>
             </div>
             <div class="problem-section">
               <div class="problem-label">Input</div>
@@ -241,34 +235,17 @@
             <div class="spinner"></div>
             <span class="loading-text">Evaluating your solution...</span>
           </div>
-          <div id="result-success-2" class="result-card success hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <div><div class="result-title">Submitted Successfully!</div></div>
-            </div>
-            <div class="result-message">Your solution has been submitted and evaluated. Your instructor will review the detailed results.</div>
-          </div>
-          <div id="result-failed-2" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></div>
-              <div><div class="result-title">Submission Rejected</div></div>
-            </div>
-            <div class="result-message">Your solution did not pass the evaluation. Please review your code and try again.</div>
-          </div>
-          <div id="result-error-2" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></div>
-              <div><div class="result-title">Submission Error</div></div>
-            </div>
-            <div class="result-message" id="error-message-2">An error occurred while processing your submission.</div>
-          </div>
+
         </div>
       </div>
 
       <!-- Problem Card 3 -->
-      <div class="problem-card">
+      <div class="problem-card hidden" id="problem-card-3">
         <div class="problem-header">
-          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg> Data Structure - Day 1</h2>
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+            </svg> Data Structure - Day 1</h2>
           <h3>3. Every Number Appears Twice Except One</h3>
         </div>
         <div class="problem-body">
@@ -321,34 +298,17 @@
             <div class="spinner"></div>
             <span class="loading-text">Evaluating your solution...</span>
           </div>
-          <div id="result-success-3" class="result-card success hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <div><div class="result-title">Submitted Successfully!</div></div>
-            </div>
-            <div class="result-message">Your solution has been submitted and evaluated. Your instructor will review the detailed results.</div>
-          </div>
-          <div id="result-failed-3" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></div>
-              <div><div class="result-title">Submission Rejected</div></div>
-            </div>
-            <div class="result-message">Your solution did not pass the evaluation. Please review your code and try again.</div>
-          </div>
-          <div id="result-error-3" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></div>
-              <div><div class="result-title">Submission Error</div></div>
-            </div>
-            <div class="result-message" id="error-message-3">An error occurred while processing your submission.</div>
-          </div>
+
         </div>
       </div>
 
       <!-- Problem Card 4 -->
-      <div class="problem-card">
+      <div class="problem-card hidden" id="problem-card-4">
         <div class="problem-header">
-          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg> Data Structure - Day 1</h2>
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+            </svg> Data Structure - Day 1</h2>
           <h3>4. Return Index of Element (Ignore First Occurrence)</h3>
         </div>
         <div class="problem-body">
@@ -401,38 +361,64 @@
             <div class="spinner"></div>
             <span class="loading-text">Evaluating your solution...</span>
           </div>
-          <div id="result-success-4" class="result-card success hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <div><div class="result-title">Submitted Successfully!</div></div>
-            </div>
-            <div class="result-message">Your solution has been submitted and evaluated. Your instructor will review the detailed results.</div>
-          </div>
-          <div id="result-failed-4" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></div>
-              <div><div class="result-title">Submission Rejected</div></div>
-            </div>
-            <div class="result-message">Your solution did not pass the evaluation. Please review your code and try again.</div>
-          </div>
-          <div id="result-error-4" class="result-card failed hidden">
-            <div class="result-card-header">
-              <div class="result-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></div>
-              <div><div class="result-title">Submission Error</div></div>
-            </div>
-            <div class="result-message" id="error-message-4">An error occurred while processing your submission.</div>
-          </div>
+
         </div>
       </div>
     </section>
   </main>
 
+  <!-- Submission Details Modal -->
+  <div id="submission-modal" class="modal hidden">
+    <div class="modal-card" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          Submission Details
+        </h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Student</label>
+            <div class="value" id="modal-student-name">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Problem</label>
+            <div class="value" id="modal-problem-title">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Status</label>
+            <div id="modal-status-badge">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Score</label>
+            <div class="value score" id="modal-score">0/100</div>
+          </div>
+        </div>
+
+        <div class="code-section">
+          <div class="code-section-title">Submitted Code</div>
+          <pre class="code-preview" id="modal-code-preview"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Get username from session and display
+    let currentUserName = "Student";
     fetch('/get-user-info')
       .then(res => res.json())
       .then(data => {
         if (data.username) {
+          currentUserName = data.username;
           document.getElementById('username-display').textContent = data.username;
           document.getElementById('user-avatar').textContent = data.username.charAt(0).toUpperCase();
         }
@@ -446,6 +432,20 @@
       });
     };
 
+    function closeModal() {
+      document.getElementById('submission-modal').classList.add('hidden');
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('submission-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'submission-modal') closeModal();
+    });
+
     // Helper to set up upload logic for each problem
     function setupUpload(problemNum) {
       const formId = problemNum === 1 ? 'c-upload-form' : `c-upload-form-${problemNum}`;
@@ -454,10 +454,6 @@
       const uploadBtnId = problemNum === 1 ? 'upload-btn' : `upload-btn-${problemNum}`;
       const uploadMsgId = problemNum === 1 ? 'upload-msg' : `upload-msg-${problemNum}`;
       const loadingId = problemNum === 1 ? 'loading-indicator' : `loading-indicator-${problemNum}`;
-      const resultSuccessId = problemNum === 1 ? 'result-success' : `result-success-${problemNum}`;
-      const resultFailedId = problemNum === 1 ? 'result-failed' : `result-failed-${problemNum}`;
-      const resultErrorId = problemNum === 1 ? 'result-error' : `result-error-${problemNum}`;
-      const errorMsgId = problemNum === 1 ? 'error-message' : `error-message-${problemNum}`;
       const problemTextId = problemNum === 1 ? 'problem-text' : `problem-text-${problemNum}`;
 
       const fileInput = document.getElementById(fileId);
@@ -465,9 +461,6 @@
       const uploadBtn = document.getElementById(uploadBtnId);
       const msg = document.getElementById(uploadMsgId);
       const loadingIndicator = document.getElementById(loadingId);
-      const resultSuccess = document.getElementById(resultSuccessId);
-      const resultFailed = document.getElementById(resultFailedId);
-      const resultError = document.getElementById(resultErrorId);
 
       if (!fileInput) return;
 
@@ -480,9 +473,6 @@
         e.preventDefault();
         msg.textContent = '';
         msg.className = 'upload-msg';
-        resultSuccess.classList.add('hidden');
-        resultFailed.classList.add('hidden');
-        resultError.classList.add('hidden');
 
         if (!fileInput.files.length) {
           msg.textContent = 'Please select a .c file.';
@@ -496,6 +486,9 @@
           msg.className = 'upload-msg error';
           return;
         }
+
+        // Read file content for preview
+        const fileContent = await file.text();
 
         // Extract the problem statement from the page
         const problemTitle = this.closest('.problem-card').querySelector('.problem-header h3').textContent;
@@ -519,18 +512,27 @@
           const result = await response.json();
 
           if (result.success) {
+            // Populate and show the modal
+            document.getElementById('modal-student-name').textContent = currentUserName;
+            document.getElementById('modal-problem-title').textContent = problemTitle;
+            document.getElementById('modal-score').textContent = `${result.score}/100`;
+            document.getElementById('modal-code-preview').textContent = fileContent;
+
+            const badge = document.getElementById('modal-status-badge');
             if (result.status === 'accepted') {
-              resultSuccess.classList.remove('hidden');
+              badge.innerHTML = '<span class="status-badge success">✓ ACCEPTED</span>';
             } else {
-              resultFailed.classList.remove('hidden');
+              badge.innerHTML = '<span class="status-badge failed">✗ REJECTED</span>';
             }
+
+            document.getElementById('submission-modal').classList.remove('hidden');
           } else {
-            document.getElementById(errorMsgId).textContent = result.message || 'Upload failed.';
-            resultError.classList.remove('hidden');
+            msg.textContent = result.message || 'Upload failed.';
+            msg.className = 'upload-msg error';
           }
         } catch (err) {
-          document.getElementById(errorMsgId).textContent = 'Error connecting to server.';
-          resultError.classList.remove('hidden');
+          msg.textContent = 'Error connecting to server.';
+          msg.className = 'upload-msg error';
         } finally {
           uploadBtn.disabled = false;
           uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Submit Solution';
@@ -542,7 +544,32 @@
     }
 
     // Setup upload for all 4 problems
-    [1,2,3,4].forEach(setupUpload);
+    [1, 2, 3, 4].forEach(setupUpload);
+
+    // Problem Selection Logic
+    function selectProblem(id) {
+      // Hide empty state
+      document.getElementById('empty-state').classList.add('hidden');
+
+      // Hide all problem cards
+      const cards = document.querySelectorAll('.problem-card');
+      cards.forEach(card => card.classList.add('hidden'));
+
+      // Show selected card
+      const selectedCard = document.getElementById(`problem-card-${id}`);
+      if (selectedCard) {
+        selectedCard.classList.remove('hidden');
+      }
+
+      // Update sidebar active state
+      const items = document.querySelectorAll('.student-item');
+      items.forEach(item => item.classList.remove('active'));
+
+      const selectedItem = document.getElementById(`sidebar-item-${id}`);
+      if (selectedItem) {
+        selectedItem.classList.add('active');
+      }
+    }
   </script>
 </body>
 

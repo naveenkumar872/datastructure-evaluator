@@ -185,10 +185,11 @@ def upload_c_file():
         score=score
     )
     
-    # Return only status to student (not the full evaluation)
+    # Return status and score to student
     return jsonify({
         'success': True,
         'status': status,
+        'score': score,
         'message': 'Submitted successfully!' if status == 'accepted' else 'Submission rejected.'
     }), 200
 
