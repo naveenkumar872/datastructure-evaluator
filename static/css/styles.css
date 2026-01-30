@@ -968,6 +968,77 @@ h4 svg {
   .topbar {
     padding: 12px 16px;
   }
+
+  .admin-container {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    padding: 16px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .topbar .brand {
+    font-size: 1rem;
+  }
+
+  .topbar .role {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .modal-card {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header h3 {
+    font-size: 1rem;
+  }
+
+  /* Send Reports Modal Mobile */
+  #send-modal-content {
+    padding: 16px !important;
+  }
+
+  #send-modal-content .time-range-btn {
+    padding: 10px !important;
+    font-size: 12px !important;
+  }
+
+  #send-modal-content > div:nth-child(3) > div:first-child {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -977,11 +1048,96 @@ h4 svg {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
   }
 
   .data-table {
     display: block;
     overflow-x: auto;
+    font-size: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+
+  .dashboard-header > div {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .dashboard-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Detail Modal Mobile */
+  #modal-content > div:first-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  #modal-content > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .code-preview {
+    font-size: 11px;
+    max-height: 200px;
+  }
+
+  .evaluation-content {
+    font-size: 13px;
+  }
+
+  /* Similar Students Panel Mobile */
+  #similar-students-panel {
+    padding: 12px !important;
+  }
+
+  #similar-students-list > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 4px;
+  }
+
+  /* Student List Mobile */
+  .student-list {
+    max-height: 200px;
+  }
+
+  .student-item {
+    padding: 8px;
+  }
+
+  .student-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  /* Buttons Mobile */
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 11px;
   }
 }

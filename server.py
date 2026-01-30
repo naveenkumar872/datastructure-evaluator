@@ -346,6 +346,22 @@ def api_admin_send_reports():
             'message': 'No submissions found for the selected time range.'
         }), 400
     
+    # Get all submissions for similarity checking
+    all_submissions = get_all_submissions_with_content()
+    
+    # Add similarity info to each submission
+    for sub in submissions:
+        if sub.get('file_content'):
+            similar = find_similar_submissions(
+                sub['file_content'],
+                all_submissions,
+                current_submission_id=sub.get('id'),
+                threshold=70.0
+            )
+            sub['similar_students'] = similar
+        else:
+            sub['similar_students'] = []
+    
     # Group by student for bulk sending
     students_data = {}
     for sub in submissions:

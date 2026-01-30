@@ -297,7 +297,7 @@ def get_submissions_by_time_range(time_range):
     
     cursor.execute(f'''
         SELECT s.id, s.username, s.problem_title, s.filename, s.status, s.score, 
-               s.submitted_at, s.evaluation, s.file_content, u.name, u.email
+               s.submitted_at, s.evaluation, s.file_content, s.ai_score, u.name, u.email
         FROM submissions s
         JOIN users u ON s.username = u.username
         WHERE {time_filter}
@@ -317,8 +317,9 @@ def get_submissions_by_time_range(time_range):
         'submitted_at': s[6],
         'evaluation': s[7],
         'file_content': s[8],
-        'name': s[9] if s[9] else s[1],
-        'email': s[10]
+        'ai_score': s[9] or 0,
+        'name': s[10] if s[10] else s[1],
+        'email': s[11]
     } for s in submissions]
 
 
