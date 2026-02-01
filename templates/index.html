@@ -479,7 +479,22 @@
 
   <script>
     // Get username from session and display
+    let allowedExtensions = ['.c', '.cpp', '.java', '.py', '.txt'];
     let currentUserName = "Student";
+
+    // Fetch allowed extensions
+    fetch('/api/config/extensions')
+      .then(res => res.json())
+      .then(data => {
+        if (data.extensions) {
+          allowedExtensions = data.extensions.split(',').map(e => '.' + e.trim().replace(/^\./, '').toLowerCase());
+          // Update existing inputs
+          document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.accept = allowedExtensions.join(',');
+          });
+        }
+      });
+
     fetch('/get-user-info')
       .then(res => res.json())
       .then(data => {
@@ -640,9 +655,10 @@
         }
 
         const file = fileInput.files[0];
-        // Allow multiple file types
-        if (!file.name.match(/\.(c|cpp|java|py|txt)$/i)) {
-          msg.textContent = 'Only .c, .cpp, .java, .py, .txt files are allowed!';
+        // Dynamic validation
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(ext)) {
+          msg.textContent = 'Allowed files: ' + allowedExtensions.join(', ');
           msg.className = 'upload-msg error';
           return;
         }

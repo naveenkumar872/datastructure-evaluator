@@ -521,7 +521,61 @@ def permanently_delete_question(question_id):
     conn.close()
 
 
+
+def init_settings():
+    """Initialize system settings table and defaults"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    # Create settings table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS system_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    ''')
+    
+    # Initialize default allowed extensions
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", ('allowed_extensions',))
+    if not cursor.fetchone():
+        cursor.execute(f"INSERT INTO system_settings (key, value) VALUES ({ph}, {ph})", 
+                      ('allowed_extensions', 'c,cpp,java,py,txt'))
+                      
+    conn.commit()
+    conn.close()
+
+def get_setting(key, default=None):
+    """Get a system setting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    return row[0] if row else default
+
+def set_setting(key, value):
+    """Set a system setting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    # Check if exists
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", (key,))
+    if cursor.fetchone():
+        cursor.execute(f"UPDATE system_settings SET value = {ph} WHERE key = {ph}", (value, key))
+    else:
+        cursor.execute(f"INSERT INTO system_settings (key, value) VALUES ({ph}, {ph})", (key, value))
+        
+    conn.commit()
+    conn.close()
+
+
 if __name__ == '__main__':
     create_database()
     add_email_column_if_missing()
     add_ai_score_column_if_missing()
+    init_settings()

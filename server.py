@@ -8,8 +8,11 @@ from create_auth_db import (
     get_all_students, get_student_submissions,
     get_submissions_by_time_range, get_all_submissions_with_content,
     add_question, get_active_questions, get_all_questions, delete_question,
-    permanently_delete_question
+    permanently_delete_question, init_settings, get_setting, set_setting
 )
+
+# Initialize settings
+init_settings()
 from evaluator import evaluate_uploaded_content, find_similar_submissions
 from file_extractor import extract_text_from_file, parse_question_from_text
 import os
@@ -160,11 +163,15 @@ def upload_c_file():
     if file.filename == '':
         return jsonify({'success': False, 'message': 'No selected file'}), 400
         
-    allowed_exts = {'.c', '.cpp', '.java', '.py', '.txt'}
+    # Validation against allowed extensions from DB
+    allowed_str = get_setting('allowed_extensions', 'c,cpp,java,py,txt')
+    # Clean string and make set of extensions (with . prefix)
+    allowed_set = {f".{ext.strip().lower()}" for ext in allowed_str.split(',') if ext.strip()}
+    
     file_ext = os.path.splitext(file.filename.lower())[1]
     
-    if file_ext not in allowed_exts:
-        return jsonify({'success': False, 'message': f'File type not allowed. Supported: {", ".join(allowed_exts)}'}), 400
+    if file_ext not in allowed_set:
+         return jsonify({'success': False, 'message': f'File type not allowed. Supported: {allowed_str}'}), 400
     
     # Get the problem statement from request
     problem_statement = request.form.get('problem', 'Check Array is Sorted')
@@ -409,6 +416,30 @@ def analytics_dashboard():
     if 'username' not in session or session.get('role') != 'admin':
         return redirect(url_for('login_page'))
     return render_template('analytics.html')
+
+
+@app.route('/api/config/extensions')
+def get_allowed_extensions():
+    """Get allowed extensions (public)"""
+    exts = get_setting('allowed_extensions', 'c,cpp,java,py,txt')
+    return jsonify({'extensions': exts})
+
+
+@app.route('/api/admin/config/extensions', methods=['POST'])
+def update_allowed_extensions():
+    """Update allowed extensions (admin only)"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    exts = data.get('extensions', '')
+    
+    # Simple validation: valid characters
+    if not re.match(r'^[a-zA-Z0-9, ]+$', exts):
+         return jsonify({'success': False, 'message': 'Invalid format. Use comma separated alphanumeric values.'}), 400
+
+    set_setting('allowed_extensions', exts)
+    return jsonify({'success': True, 'extensions': exts})
 
 
 @app.route('/api/admin/send-reports', methods=['POST'])
