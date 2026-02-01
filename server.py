@@ -403,6 +403,14 @@ def export_submissions_csv():
     )
 
 
+@app.route('/analytics')
+def analytics_dashboard():
+    """Analytics Dashboard Page"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login_page'))
+    return render_template('analytics.html')
+
+
 @app.route('/api/admin/send-reports', methods=['POST'])
 def api_admin_send_reports():
     """Send reports to students based on time range"""

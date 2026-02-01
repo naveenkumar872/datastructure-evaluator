@@ -447,7 +447,7 @@ def get_active_questions():
         SELECT id, title, description, difficulty, created_at
         FROM questions
         WHERE is_active = {active_value}
-        ORDER BY created_at DESC
+        ORDER BY created_at ASC
     ''')
     
     questions = cursor.fetchall()
