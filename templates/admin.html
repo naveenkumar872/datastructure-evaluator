@@ -678,7 +678,7 @@
         async function viewSubmission(id) {
             try {
                 currentSubmissionId = id;
-                const res = await fetch(`/ api / admin / submission / ${id} `);
+                const res = await fetch(`/api/admin/submission/${id}`);
                 const sub = await res.json();
 
                 document.getElementById('detail-student').textContent = sub.username;
