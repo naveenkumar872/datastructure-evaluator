@@ -5,6 +5,7 @@ Email utility module for sending submission reports to students
 import smtplib
 import os
 import html
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -356,10 +357,12 @@ def generate_report_html(student_name, submissions):
 
 
 def send_report_email(to_email, student_name, submissions):
-    """Send a report email to a student"""
+    """Send a report email to a student using Resend API"""
     
-    if not is_email_configured():
-        return {'success': False, 'message': 'Email not configured. Set SMTP_USER and SMTP_PASSWORD environment variables.'}
+    resend_key = os.environ.get('RESEND_API_KEY')
+    if not resend_key:
+        print("[-] RESEND_API_KEY not found in environment variables.")
+        return {'success': False, 'message': 'Resend API Key not configured.'}
     
     if not to_email:
         return {'success': False, 'message': 'No email address provided'}
@@ -368,46 +371,37 @@ def send_report_email(to_email, student_name, submissions):
         return {'success': False, 'message': 'No submissions to report'}
     
     try:
-        # Create message
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f"📊 Your Submission Report - Data Structure Evaluator"
-        msg['From'] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
-        msg['To'] = to_email
-        
         # Generate HTML content
         html_content = generate_report_html(student_name, submissions)
         
-        # Plain text fallback
-        text_content = f"""
-Dear {student_name},
-
-Here is your submission report from Data Structure Evaluator.
-
-Total Submissions: {len(submissions)}
-Accepted: {sum(1 for s in submissions if s['status'] == 'accepted')}
-
-Please check your email client with HTML support for the full report.
-
-Best regards,
-Data Structure Evaluator
-        """
+        # Resend API Endpoint
+        url = "https://api.resend.com/emails"
         
-        msg.attach(MIMEText(text_content, 'plain'))
-        msg.attach(MIMEText(html_content, 'html'))
+        # Payload
+        # Note: 'from' must be 'onboarding@resend.dev' until you verify a domain.
+        payload = {
+            "from": "Data Structure Evaluator <onboarding@resend.dev>",
+            "to": [to_email],
+            "subject": "📊 Your Submission Report - Data Structure Evaluator",
+            "html": html_content
+        }
         
-        # Send email
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=180) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
+        headers = {
+            "Authorization": f"Bearer {resend_key}",
+            "Content-Type": "application/json"
+        }
         
-        return {'success': True, 'message': f'Report sent to {to_email}'}
+        print(f"[*] Sending email to {to_email} via Resend...")
+        
+        response = requests.post(url, json=payload, headers=headers)
+        
+        if response.status_code == 200 or response.status_code == 201:
+            print(f"[+] Email sent successfully to {to_email}")
+            return {'success': True, 'message': f'Report sent to {to_email}'}
+        else:
+            print(f"[-] Resend API Error: {response.text}")
+            return {'success': False, 'message': f'Resend Error: {response.text}'}
     
-    except smtplib.SMTPAuthenticationError:
-        print(f"[-] SMTP Authentication failed for {to_email}")
-        return {'success': False, 'message': 'SMTP authentication failed. Check credentials.'}
-    except smtplib.SMTPException as e:
-        print(f"[-] SMTP Error sending to {to_email}: {e}")
-        return {'success': False, 'message': f'SMTP error: {str(e)}'}
     except Exception as e:
         print(f"[-] General Error sending to {to_email}: {e}")
         return {'success': False, 'message': f'Error sending email: {str(e)}'}

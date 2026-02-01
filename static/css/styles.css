@@ -1036,7 +1036,7 @@ h4 svg {
     font-size: 12px !important;
   }
 
-  #send-modal-content > div:nth-child(3) > div:first-child {
+  #send-modal-content>div:nth-child(3)>div:first-child {
     grid-template-columns: 1fr !important;
   }
 }
@@ -1076,7 +1076,7 @@ h4 svg {
     white-space: nowrap;
   }
 
-  .dashboard-header > div {
+  .dashboard-header>div {
     flex-direction: column;
     align-items: stretch !important;
   }
@@ -1087,11 +1087,11 @@ h4 svg {
   }
 
   /* Detail Modal Mobile */
-  #modal-content > div:first-child {
+  #modal-content>div:first-child {
     grid-template-columns: 1fr !important;
   }
 
-  #modal-content > div:nth-child(2) {
+  #modal-content>div:nth-child(2) {
     grid-template-columns: 1fr !important;
   }
 
@@ -1109,7 +1109,7 @@ h4 svg {
     padding: 12px !important;
   }
 
-  #similar-students-list > div {
+  #similar-students-list>div {
     flex-direction: column;
     align-items: flex-start !important;
     gap: 4px;
@@ -1140,4 +1140,79 @@ h4 svg {
     padding: 6px 10px;
     font-size: 11px;
   }
+}
+
+/* Dark Theme Overrides */
+[data-theme='dark'] {
+  --bg-primary: #1e293b;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+  --border-color: #334155;
+  --border-light: #1e293b;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --success-light: rgba(16, 185, 129, 0.2);
+  --danger-light: rgba(239, 68, 68, 0.2);
+  --warning-light: rgba(245, 158, 11, 0.2);
+  --info-light: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .problem-header {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Modern Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-tertiary);
+  /* Inactive */
+  border: 1px solid var(--border-color);
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-muted);
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked+.slider {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+input:checked+.slider:before {
+  transform: translateX(22px);
+  background-color: white;
 }
