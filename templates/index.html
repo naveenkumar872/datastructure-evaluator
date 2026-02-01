@@ -618,15 +618,33 @@
     let currentUserName = "Student";
 
     // Fetch allowed extensions
-    fetch('/api/config/extensions')
+    // Fetch system config
+    fetch('/api/public/config')
       .then(res => res.json())
       .then(data => {
+        window.appConfig = data;
+
+        // 1. Extensions
         if (data.extensions) {
           allowedExtensions = data.extensions.split(',').map(e => '.' + e.trim().replace(/^\./, '').toLowerCase());
-          // Update existing inputs
           document.querySelectorAll('input[type="file"]').forEach(input => {
             input.accept = allowedExtensions.join(',');
           });
+        }
+
+        // 2. Enable/Disable Upload
+        if (data.enable_upload === false) {
+          // document.querySelectorAll('.upload-section').forEach(el => el.style.display = 'none'); // Removed to prevents hiding editor
+          document.querySelectorAll('button[onclick*="\'upload\'"]').forEach(btn => {
+            btn.style.display = 'none';
+            const editorBtn = btn.parentElement.querySelector('button[onclick*="\'editor\'"]');
+            if (editorBtn) editorBtn.click();
+          });
+        }
+
+        // 3. Enable/Disable Editor
+        if (data.enable_editor === false) {
+          document.querySelectorAll('button[onclick*="\'editor\'"]').forEach(btn => btn.style.display = 'none');
         }
       });
 
@@ -784,51 +802,71 @@
 
       document.getElementById(formId).onsubmit = async function (e) {
         e.preventDefault();
-        msg.textContent = '';
-        msg.className = 'upload-msg';
-
-        // Clear previous result
-        const existingResult = document.getElementById(`submission-result-${problemNum}`);
-        if (existingResult) existingResult.remove();
-
-        if (!fileInput.files.length) {
-          msg.textContent = 'Please select a file.';
-          msg.className = 'upload-msg error';
-          return;
-        }
-
-        const file = fileInput.files[0];
-        // Dynamic validation
-        const ext = '.' + file.name.split('.').pop().toLowerCase();
-        if (!allowedExtensions.includes(ext)) {
-          msg.textContent = 'Allowed files: ' + allowedExtensions.join(', ');
-          msg.className = 'upload-msg error';
-          return;
-        }
-
-        // Read file content for preview
-        const fileContent = await file.text();
-
-        // Extract the problem statement from the page
-        const problemTitle = this.closest('.problem-card').querySelector('.problem-header h3').textContent;
-        const problemTextElement = document.getElementById(problemTextId);
-        const problemStatement = `${problemTitle}\n\n${problemTextElement.innerText}`;
-
-        // Show loading state
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Evaluating...';
-        loadingIndicator.classList.remove('hidden');
-
-        const formData = new FormData();
-        formData.append('cfile', file);
-        formData.append('problem', problemStatement);
 
         try {
+          msg.textContent = '';
+          msg.className = 'upload-msg';
+
+          // Clear previous result
+          const existingResult = document.getElementById(`submission-result-${problemNum}`);
+          if (existingResult) existingResult.remove();
+
+          if (!fileInput.files.length) {
+            msg.textContent = 'Please select a file.';
+            msg.className = 'upload-msg error';
+            return;
+          }
+
+          const file = fileInput.files[0];
+          // Dynamic validation using global allowedExtensions
+          const ext = '.' + file.name.split('.').pop().toLowerCase();
+          if (!allowedExtensions.includes(ext)) {
+            msg.textContent = 'Allowed files: ' + allowedExtensions.join(', ');
+            msg.className = 'upload-msg error';
+            return;
+          }
+
+          // Read file content for preview
+          const fileContent = await file.text();
+
+          // Extract the problem statement from the page
+          const card = this.closest('.problem-card');
+          if (!card) throw new Error("Problem Card not found");
+
+          const headerH3 = card.querySelector('.problem-header h2, .problem-header h3');
+          if (!headerH3) throw new Error("Problem Header not found");
+          const problemTitle = headerH3.textContent;
+
+          const problemTextElement = document.getElementById(problemTextId);
+          if (!problemTextElement) throw new Error("Problem Text element not found: " + problemTextId);
+
+          const problemStatement = `${problemTitle}\n\n${problemTextElement.innerText}`;
+
+          // Show loading state
+          if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Evaluating...';
+          }
+          if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+
+          const formData = new FormData();
+          formData.append('cfile', file);
+          formData.append('problem', problemStatement);
+
           const response = await fetch('/upload-c', {
             method: 'POST',
             body: formData,
           });
-          const result = await response.json();
+
+          // Check if response is valid JSON
+          const textRef = await response.text();
+          let result;
+          try {
+            result = JSON.parse(textRef);
+          } catch (jsonErr) {
+            console.error("Server returned non-JSON:", textRef);
+            throw new Error("Server Error: " + (response.statusText || "Invalid Response"));
+          }
 
           if (result.success) {
             // Show inline result message instead of modal
@@ -838,14 +876,18 @@
             msg.className = 'upload-msg error';
           }
         } catch (err) {
-          msg.textContent = 'Error connecting to server.';
+          console.error(err);
+          alert("Error submitting solution: " + err.message);
+          msg.textContent = 'Error: ' + err.message;
           msg.className = 'upload-msg error';
         } finally {
-          uploadBtn.disabled = false;
-          uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Submit Solution';
-          loadingIndicator.classList.add('hidden');
-          fileInput.value = '';
-          fileNameSpan.textContent = 'Choose a file';
+          if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Submit Solution';
+          }
+          if (loadingIndicator) loadingIndicator.classList.add('hidden');
+          if (fileInput) fileInput.value = '';
+          if (fileNameSpan) fileNameSpan.textContent = 'Choose a file';
         }
       };
     }
@@ -1463,6 +1505,67 @@
         if (id >= 5) injectMonaco(id);
       });
     };
+
+    function showInlineResult(id, status, score) {
+      // Find form to place result after
+      const formId = id === 1 ? 'c-upload-form' : `c-upload-form-${id}`;
+      const form = document.getElementById(formId);
+
+      // Remove existing result if any
+      const existing = document.getElementById(`submission-result-${id}`);
+      if (existing) existing.remove();
+
+      const div = document.createElement('div');
+      div.id = `submission-result-${id}`;
+      div.style.marginTop = '20px';
+      div.style.animation = 'fadeIn 0.5s ease-out';
+
+      if (status === 'accepted') {
+        div.innerHTML = `
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-weight: 600; color: #166534; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Solution Accepted
+                    </div>
+                    <div style="font-size: 14px; color: #15803d; margin-bottom: 8px;">Great job! Your code passed the evaluation.</div>
+                    <div style="display: inline-block; background: #22c55e; color: white; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.9em;">
+                        Score: ${score}/100
+                    </div>
+                </div>
+           `;
+        // Check for dark mode to adjust colors? 
+        // Using rgba background is safer.
+      } else {
+        div.innerHTML = `
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 16px; text-align: center;">
+                     <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        Submission Rejected
+                     </div>
+                     <div style="font-size: 14px; color: #7f1d1d; margin-bottom: 8px;">Your solution did not meet the requirements.</div>
+                     <div style="display: inline-block; background: #ef4444; color: white; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.9em;">
+                        Score: ${score}/100
+                     </div>
+                </div>
+           `;
+      }
+
+      if (form) {
+        form.insertAdjacentElement('afterend', div);
+      } else {
+        // Fallback if form not found (e.g. editor mode)
+        // Append to problem body
+        const card = document.getElementById(`problem-card-${id}`);
+        if (card) {
+          const body = card.querySelector('.problem-body');
+          if (body) body.appendChild(div);
+        }
+      }
+
+      // Update stats
+      if (window.loadMySubmissionsCount) loadMySubmissionsCount();
+      if (window.showMySubmissions) showMySubmissions();
+    }
 
     // ============================================
     // Theme Manager

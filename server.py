@@ -671,11 +671,13 @@ def get_public_config():
         block_paste = get_setting('block_paste', 'false')
         enable_editor = get_setting('enable_editor', 'true')
         enable_upload = get_setting('enable_upload', 'true')
+        extensions = get_setting('allowed_extensions', 'c,cpp,java,py,txt')
         
         return jsonify({
             'block_paste': block_paste == 'true',
             'enable_editor': enable_editor == 'true',
-            'enable_upload': enable_upload == 'true'
+            'enable_upload': enable_upload == 'true',
+            'extensions': extensions
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -692,6 +694,9 @@ def update_general_config():
         set_setting('enable_editor', str(data.get('enable_editor', True)).lower())
         set_setting('enable_upload', str(data.get('enable_upload', True)).lower())
         
+        if 'extensions' in data:
+            set_setting('allowed_extensions', data['extensions'])
+
         return jsonify({'success': True, 'message': 'Settings updated'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
