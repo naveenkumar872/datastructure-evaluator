@@ -32,6 +32,16 @@
       Data Structure Evaluator
     </div>
     <div class="role">
+      <button id="btn-my-submissions" class="btn primary" onclick="showMySubmissions()"
+        style="display: flex; align-items: center; gap: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+        My Submissions
+        <span id="header-submission-count"
+          style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem;">0</span>
+      </button>
       <div class="user-badge">
         <div class="avatar" id="user-avatar">S</div>
         <span id="username-display">Student</span>
@@ -47,7 +57,7 @@
           <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg> Problems</h3>
+            </svg>Problems</h3>
         </div>
         <ul id="problem-list" class="student-list">
           <li class="student-item" id="sidebar-item-1" onclick="selectProblem(1)">
@@ -364,6 +374,62 @@
 
         </div>
       </div>
+
+      <!-- My Submissions Panel -->
+      <div class="problem-card hidden" id="my-submissions-panel">
+        <div class="problem-header">
+          <h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg> My Submissions</h2>
+          <h3>Your Submission History</h3>
+        </div>
+        <div class="problem-body">
+          <!-- Stats Row -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+            <div
+              style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; padding: 20px; color: white; text-align: center;">
+              <div style="font-size: 2rem; font-weight: 700;" id="my-total-submissions">0</div>
+              <div style="font-size: 0.875rem; opacity: 0.9;">Total Submissions</div>
+            </div>
+            <div
+              style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; padding: 20px; color: white; text-align: center;">
+              <div style="font-size: 2rem; font-weight: 700;" id="my-accepted-count">0</div>
+              <div style="font-size: 0.875rem; opacity: 0.9;">Accepted</div>
+            </div>
+            <div
+              style="background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 12px; padding: 20px; color: white; text-align: center;">
+              <div style="font-size: 2rem; font-weight: 700;" id="my-rejected-count">0</div>
+              <div style="font-size: 0.875rem; opacity: 0.9;">Rejected</div>
+            </div>
+          </div>
+
+          <!-- Submissions Table -->
+          <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden;">
+            <table class="data-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Problem</th>
+                  <th>File</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                  <th>Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="my-submissions-table">
+                <!-- Submissions will be loaded here -->
+              </tbody>
+            </table>
+            <div id="no-my-submissions" class="hidden"
+              style="padding: 40px; text-align: center; color: var(--text-muted);">
+              <div style="font-size: 2rem; margin-bottom: 12px;">📭</div>
+              <p>You haven't submitted any solutions yet.</p>
+              <p style="font-size: 0.875rem;">Select a problem from the sidebar and submit your code!</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -425,6 +491,9 @@
       })
       .catch(() => { });
 
+    // Load my submissions count on page load
+    loadMySubmissionsCount();
+
     // Logout handler
     document.getElementById('btn-logout').onclick = function () {
       fetch('/logout').then(() => {
@@ -445,6 +514,89 @@
     document.getElementById('submission-modal').addEventListener('click', (e) => {
       if (e.target.id === 'submission-modal') closeModal();
     });
+
+    // Helper function to create inline result message
+    function showInlineResult(problemNum, status, score) {
+      const loadingId = problemNum === 1 ? 'loading-indicator' : `loading-indicator-${problemNum}`;
+      const loadingIndicator = document.getElementById(loadingId);
+
+      // Create result message element
+      const resultId = `submission-result-${problemNum}`;
+      let resultDiv = document.getElementById(resultId);
+
+      if (!resultDiv) {
+        resultDiv = document.createElement('div');
+        resultDiv.id = resultId;
+        loadingIndicator.parentNode.insertBefore(resultDiv, loadingIndicator.nextSibling);
+      }
+
+      if (status === 'accepted') {
+        resultDiv.innerHTML = `
+          <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #22c55e; border-radius: 12px; animation: fadeIn 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 48px; height: 48px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #166534;">✓ FILE ACCEPTED</div>
+                <div style="color: #15803d; font-size: 0.875rem;">Your solution has been submitted successfully!</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid #bbf7d0;">
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #166534;">${score}/100</div>
+                <div style="font-size: 0.75rem; color: #15803d;">Score</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #166534;">✓</div>
+                <div style="font-size: 0.75rem; color: #15803d;">Status</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        resultDiv.innerHTML = `
+          <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #ef4444; border-radius: 12px; animation: fadeIn 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 48px; height: 48px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </div>
+              <div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #991b1b;">✗ FILE REJECTED</div>
+                <div style="color: #b91c1c; font-size: 0.875rem;">Your solution did not pass the evaluation.</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid #fecaca;">
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #991b1b;">${score}/100</div>
+                <div style="font-size: 0.75rem; color: #b91c1c;">Score</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #991b1b;">✗</div>
+                <div style="font-size: 0.75rem; color: #b91c1c;">Status</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        if (resultDiv) {
+          resultDiv.style.opacity = '0';
+          resultDiv.style.transition = 'opacity 0.3s ease';
+          setTimeout(() => resultDiv.remove(), 300);
+        }
+      }, 10000);
+
+      // Refresh my submissions count
+      loadMySubmissionsCount();
+    }
 
     // Helper to set up upload logic for each problem
     function setupUpload(problemNum) {
@@ -467,12 +619,19 @@
       fileInput.addEventListener('change', function () {
         const fileName = this.files[0] ? this.files[0].name : 'Choose a .c file';
         fileNameSpan.textContent = fileName;
+        // Clear any previous result message
+        const resultDiv = document.getElementById(`submission-result-${problemNum}`);
+        if (resultDiv) resultDiv.remove();
       });
 
       document.getElementById(formId).onsubmit = async function (e) {
         e.preventDefault();
         msg.textContent = '';
         msg.className = 'upload-msg';
+
+        // Clear previous result
+        const existingResult = document.getElementById(`submission-result-${problemNum}`);
+        if (existingResult) existingResult.remove();
 
         if (!fileInput.files.length) {
           msg.textContent = 'Please select a .c file.';
@@ -512,20 +671,8 @@
           const result = await response.json();
 
           if (result.success) {
-            // Populate and show the modal
-            document.getElementById('modal-student-name').textContent = currentUserName;
-            document.getElementById('modal-problem-title').textContent = problemTitle;
-            document.getElementById('modal-score').textContent = `${result.score}/100`;
-            document.getElementById('modal-code-preview').textContent = fileContent;
-
-            const badge = document.getElementById('modal-status-badge');
-            if (result.status === 'accepted') {
-              badge.innerHTML = '<span class="status-badge success">✓ ACCEPTED</span>';
-            } else {
-              badge.innerHTML = '<span class="status-badge failed">✗ REJECTED</span>';
-            }
-
-            document.getElementById('submission-modal').classList.remove('hidden');
+            // Show inline result message instead of modal
+            showInlineResult(problemNum, result.status, result.score);
           } else {
             msg.textContent = result.message || 'Upload failed.';
             msg.className = 'upload-msg error';
@@ -551,7 +698,7 @@
       // Hide empty state
       document.getElementById('empty-state').classList.add('hidden');
 
-      // Hide all problem cards
+      // Hide all problem cards including my-submissions-panel
       const cards = document.querySelectorAll('.problem-card');
       cards.forEach(card => card.classList.add('hidden'));
 
@@ -562,13 +709,120 @@
       }
 
       // Update sidebar active state
-      const items = document.querySelectorAll('.student-item');
+      const items = document.querySelectorAll('.student-item, .sidebar-item');
       items.forEach(item => item.classList.remove('active'));
 
       const selectedItem = document.getElementById(`sidebar-item-${id}`);
       if (selectedItem) {
         selectedItem.classList.add('active');
       }
+    }
+
+    // =============================================
+    // My Submissions Functions
+    // =============================================
+
+    async function loadMySubmissionsCount() {
+      try {
+        const res = await fetch('/api/student/my-submissions');
+        const submissions = await res.json();
+        const count = submissions.length;
+        const accepted = submissions.filter(s => s.status === 'accepted').length;
+        // Update header badge count only (sidebar was removed)
+        document.getElementById('header-submission-count').textContent = count;
+      } catch (err) {
+        document.getElementById('header-submission-count').textContent = '0';
+      }
+    }
+
+    async function showMySubmissions() {
+      // Hide empty state
+      document.getElementById('empty-state').classList.add('hidden');
+
+      // Hide all problem cards
+      const cards = document.querySelectorAll('.problem-card');
+      cards.forEach(card => card.classList.add('hidden'));
+
+      // Show my submissions panel
+      document.getElementById('my-submissions-panel').classList.remove('hidden');
+
+      // Update sidebar active state (remove active from problem items)
+      const items = document.querySelectorAll('.student-item');
+      items.forEach(item => item.classList.remove('active'));
+
+      // Load submissions
+      try {
+        const res = await fetch('/api/student/my-submissions');
+        const submissions = await res.json();
+
+        // Update stats
+        document.getElementById('my-total-submissions').textContent = submissions.length;
+        const accepted = submissions.filter(s => s.status === 'accepted').length;
+        const rejected = submissions.filter(s => s.status === 'rejected').length;
+        document.getElementById('my-accepted-count').textContent = accepted;
+        document.getElementById('my-rejected-count').textContent = rejected;
+
+        // Update table
+        const tbody = document.getElementById('my-submissions-table');
+        const noSubmissions = document.getElementById('no-my-submissions');
+
+        if (submissions.length === 0) {
+          tbody.innerHTML = '';
+          noSubmissions.classList.remove('hidden');
+        } else {
+          noSubmissions.classList.add('hidden');
+          tbody.innerHTML = submissions.map(s => `
+            <tr>
+              <td style="font-weight: 500;">${s.problem_title || 'N/A'}</td>
+              <td>${s.filename}</td>
+              <td>
+                <span class="status-badge ${s.status === 'accepted' ? 'success' : 'failed'}">
+                  ${s.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                </span>
+              </td>
+              <td style="font-weight: 600;">${s.score || 0}/100</td>
+              <td>${formatDate(s.submitted_at)}</td>
+              <td>
+                <button class="btn secondary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="viewMySubmission(${s.id})">
+                  View Details
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading submissions:', err);
+      }
+    }
+
+    async function viewMySubmission(id) {
+      try {
+        const res = await fetch(`/api/student/submission/${id}`);
+        const sub = await res.json();
+
+        document.getElementById('modal-student-name').textContent = currentUserName;
+        document.getElementById('modal-problem-title').textContent = sub.problem_title || 'N/A';
+        document.getElementById('modal-score').textContent = `${sub.score || 0}/100`;
+        document.getElementById('modal-code-preview').textContent = sub.file_content || 'No code available';
+
+        const badge = document.getElementById('modal-status-badge');
+        if (sub.status === 'accepted') {
+          badge.innerHTML = '<span class="status-badge success">✓ ACCEPTED</span>';
+        } else {
+          badge.innerHTML = '<span class="status-badge failed">✗ REJECTED</span>';
+        }
+
+        document.getElementById('submission-modal').classList.remove('hidden');
+      } catch (err) {
+        console.error('Error loading submission details:', err);
+        alert('Failed to load submission details');
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   </script>
 </body>

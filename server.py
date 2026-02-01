@@ -163,10 +163,12 @@ def upload_c_file():
     score = 0
     status = 'rejected'
     evaluation_text = None
+    ai_score = 0
     
     if evaluation_result['success']:
         evaluation_text = evaluation_result['evaluation']
         score = extract_score_from_evaluation(evaluation_text)
+        ai_score = evaluation_result.get('ai_score', 0)  # Get AI detection score
         
         # Check for PASS/FAIL in evaluation or score threshold
         if 'PASS' in evaluation_text.upper() or score >= 60:
@@ -174,7 +176,7 @@ def upload_c_file():
         else:
             status = 'rejected'
     
-    # Save submission to database
+    # Save submission to database with AI score
     save_submission(
         user_id=session.get('user_id', 0),
         username=session['username'],
@@ -183,7 +185,8 @@ def upload_c_file():
         file_content=file_content,
         status=status,
         evaluation=evaluation_text,
-        score=score
+        score=score,
+        ai_score=ai_score  # Now properly saving the AI detection score
     )
     
     # Return status and score to student
@@ -194,6 +197,37 @@ def upload_c_file():
         'message': 'Submitted successfully!' if status == 'accepted' else 'Submission rejected.'
     }), 200
 
+
+# ============================================
+# Student API Routes
+# ============================================
+
+@app.route('/api/student/my-submissions')
+def api_student_submissions():
+    """Get all submissions for the currently logged-in student"""
+    if 'username' not in session:
+        return jsonify([]), 401
+    
+    # Get the logged-in student's username (register number)
+    username = session['username']
+    submissions = get_student_submissions(username)
+    
+    return jsonify(submissions)
+
+
+@app.route('/api/student/submission/<int:submission_id>')
+def api_student_submission_detail(submission_id):
+    """Get details of a specific submission (only if it belongs to the current student)"""
+    if 'username' not in session:
+        return jsonify({}), 401
+    
+    submission = get_submission_detail(submission_id)
+    
+    # Verify this submission belongs to the current user
+    if submission and submission.get('register_no') == session['username']:
+        return jsonify(submission)
+    
+    return jsonify({'error': 'Not found or unauthorized'}), 404
 
 
 # ============================================

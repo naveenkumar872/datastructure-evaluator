@@ -50,14 +50,16 @@
             <p>Monitor student submissions and view detailed evaluation reports</p>
             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                 <button class="btn primary" id="btn-send-report">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                        <path d="M22 2L11 13"/>
-                        <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="margin-right: 6px;">
+                        <path d="M22 2L11 13" />
+                        <path d="M22 2l-7 20-4-9-9-4 20-7z" />
                     </svg>
                     Send Reports
                 </button>
                 <button class="btn danger" id="btn-reset-submissions">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="margin-right: 6px;">
                         <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
                     </svg>
                     Reset All Submissions
@@ -185,12 +187,14 @@
                 </div>
 
                 <!-- AI Detection & Similarity Stats -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; background: var(--bg-secondary); padding: 16px; border-radius: 8px;">
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; background: var(--bg-secondary); padding: 16px; border-radius: 8px;">
                     <div>
                         <div class="form-label" style="display: flex; align-items: center; gap: 6px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
-                                <path d="M12 6v6l4 2"/>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
+                                <path d="M12 6v6l4 2" />
                             </svg>
                             AI Detection
                         </div>
@@ -198,16 +202,20 @@
                     </div>
                     <div>
                         <div class="form-label" style="display: flex; align-items: center; gap: 6px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
                             </svg>
                             Similar Submissions
-                            <button id="btn-view-similar" class="btn secondary" style="padding: 2px 8px; font-size: 11px; margin-left: auto;" title="View students with similar code">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="16" x2="12" y2="12"/>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            <button id="btn-view-similar" class="btn secondary"
+                                style="padding: 2px 8px; font-size: 11px; margin-left: auto;"
+                                title="View students with similar code">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
                                 </svg>
                                 View
                             </button>
@@ -217,12 +225,16 @@
                 </div>
 
                 <!-- Similar Students Modal (hidden by default) -->
-                <div id="similar-students-panel" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 600; color: #92400e; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                            <line x1="12" y1="9" x2="12" y2="13"/>
-                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                <div id="similar-students-panel"
+                    style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <div
+                        style="font-weight: 600; color: #92400e; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
                         </svg>
                         Students with Similar Code
                     </div>
@@ -254,25 +266,38 @@
             <div class="modal-header">
                 <h3><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         style="vertical-align: middle; margin-right: 6px;">
-                        <rect x="2" y="4" width="20" height="16" rx="2"/>
-                        <path d="M22 6l-10 7L2 6"/>
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="M22 6l-10 7L2 6" />
                     </svg>Send Reports to Students</h3>
                 <button class="modal-close" id="close-send-modal">&times;</button>
             </div>
 
             <div id="send-modal-content" style="padding: 20px;">
-                <p style="color: var(--text-muted); margin-bottom: 20px;">Send submission reports to students via email. Choose a time range to filter submissions.</p>
-                
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Send submission reports to students via email.
+                    Choose a time range to filter submissions.</p>
+
                 <!-- Time Range Selection -->
                 <div style="margin-bottom: 24px;">
                     <div class="form-label" style="margin-bottom: 12px;">Select Time Range</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button class="time-range-btn" data-range="1h" style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 1 Hour</button>
-                        <button class="time-range-btn" data-range="2h" style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 2 Hours</button>
-                        <button class="time-range-btn active" data-range="5h" style="padding: 12px; border: 2px solid var(--primary); border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 5 Hours</button>
-                        <button class="time-range-btn" data-range="12h" style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 12 Hours</button>
-                        <button class="time-range-btn" data-range="24h" style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 24 Hours</button>
-                        <button class="time-range-btn" data-range="48h" style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last 48 Hours</button>
+                        <button class="time-range-btn" data-range="1h"
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            1 Hour</button>
+                        <button class="time-range-btn" data-range="2h"
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            2 Hours</button>
+                        <button class="time-range-btn active" data-range="5h"
+                            style="padding: 12px; border: 2px solid var(--primary); border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            5 Hours</button>
+                        <button class="time-range-btn" data-range="12h"
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            12 Hours</button>
+                        <button class="time-range-btn" data-range="24h"
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            24 Hours</button>
+                        <button class="time-range-btn" data-range="48h"
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            48 Hours</button>
                     </div>
                 </div>
 
@@ -280,27 +305,36 @@
                 <div style="margin-bottom: 20px;">
                     <div class="form-label" style="margin-bottom: 12px;">Preview</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
-                        <div style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
-                            <div id="preview-total-submissions" style="font-size: 28px; font-weight: 700; color: var(--primary);">0</div>
+                        <div
+                            style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div id="preview-total-submissions"
+                                style="font-size: 28px; font-weight: 700; color: var(--primary);">0</div>
                             <div style="font-size: 12px; color: var(--text-muted);">Submissions</div>
                         </div>
-                        <div style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
-                            <div id="preview-with-email" style="font-size: 28px; font-weight: 700; color: #22c55e;">0</div>
+                        <div
+                            style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div id="preview-with-email" style="font-size: 28px; font-weight: 700; color: #22c55e;">0
+                            </div>
                             <div style="font-size: 12px; color: var(--text-muted);">With Email</div>
                         </div>
-                        <div style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
-                            <div id="preview-without-email" style="font-size: 28px; font-weight: 700; color: #f59e0b;">0</div>
+                        <div
+                            style="text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div id="preview-without-email" style="font-size: 28px; font-weight: 700; color: #f59e0b;">0
+                            </div>
                             <div style="font-size: 12px; color: var(--text-muted);">No Email</div>
                         </div>
                     </div>
-                    <p id="preview-summary" style="font-size: 14px; color: var(--text-muted);">Reports will be sent to <strong id="preview-send-count">0</strong> student(s) with valid email addresses.</p>
+                    <p id="preview-summary" style="font-size: 14px; color: var(--text-muted);">Reports will be sent to
+                        <strong id="preview-send-count">0</strong> student(s) with valid email addresses.
+                    </p>
                 </div>
 
                 <!-- Send Button -->
                 <button class="btn primary" id="btn-confirm-send" style="width: 100%; padding: 14px; font-size: 15px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                        <path d="M22 2L11 13"/>
-                        <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="margin-right: 8px;">
+                        <path d="M22 2L11 13" />
+                        <path d="M22 2l-7 20-4-9-9-4 20-7z" />
                     </svg>
                     Send Reports
                 </button>
@@ -318,7 +352,7 @@
         // Load preview for selected time range
         async function loadSendPreview(timeRange) {
             selectedTimeRange = timeRange;
-            
+
             // Update button styles
             document.querySelectorAll('.time-range-btn').forEach(btn => {
                 if (btn.dataset.range === timeRange) {
@@ -331,18 +365,18 @@
                     btn.style.color = 'inherit';
                 }
             });
-            
+
             try {
                 const res = await fetch('/api/admin/send-reports/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ timeRange })
                 });
-                
+
                 if (!res.ok) throw new Error('Failed to load preview');
-                
+
                 const data = await res.json();
-                
+
                 // Update stats
                 document.getElementById('preview-total-submissions').textContent = data.total_submissions;
                 document.getElementById('preview-with-email').textContent = data.with_email;
@@ -360,17 +394,17 @@
             document.getElementById('btn-confirm-send').style.display = 'flex';
             document.getElementById('btn-confirm-send').disabled = false;
             document.getElementById('btn-confirm-send').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send Reports';
-            
+
             // Show modal
             document.getElementById('send-reports-modal').classList.remove('hidden');
-            
+
             // Load preview for default time range
             loadSendPreview(selectedTimeRange);
         };
 
         // Time range button click handlers
         document.querySelectorAll('.time-range-btn').forEach(btn => {
-            btn.onclick = function() {
+            btn.onclick = function () {
                 loadSendPreview(this.dataset.range);
             };
         });
@@ -388,16 +422,16 @@
             const btn = this;
             btn.disabled = true;
             btn.innerHTML = '⏳ Sending emails...';
-            
+
             try {
                 const res = await fetch('/api/admin/send-reports', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ timeRange: selectedTimeRange })
                 });
-                
+
                 const data = await res.json();
-                
+
                 // Show results
                 const resultsDiv = document.getElementById('send-results');
                 if (data.success) {
@@ -592,7 +626,7 @@
           </span>
         `;
                 document.getElementById('detail-score').textContent = `${sub.score || 0}/100`;
-                
+
                 // AI Detection Score
                 const aiScore = sub.ai_score || 0;
                 const aiColor = aiScore >= 70 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
@@ -601,11 +635,11 @@
                     <span style="color: ${aiColor};">${aiScore}%</span>
                     <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">${aiLabel}</span>
                 `;
-                
+
                 // Reset similarity panel
                 document.getElementById('detail-similarity').innerHTML = '<span style="color: var(--text-muted);">Click View to check</span>';
                 document.getElementById('similar-students-panel').style.display = 'none';
-                
+
                 document.getElementById('detail-code').textContent = sub.file_content || 'No code available';
                 document.getElementById('detail-evaluation').innerHTML = formatEvaluation(sub.evaluation || 'No evaluation available');
 
@@ -617,21 +651,21 @@
         }
 
         // View similar submissions button handler
-        document.getElementById('btn-view-similar').onclick = async function() {
+        document.getElementById('btn-view-similar').onclick = async function () {
             if (!currentSubmissionId) return;
-            
+
             const btn = this;
             btn.disabled = true;
             btn.innerHTML = '⏳';
-            
+
             try {
                 const res = await fetch(`/api/admin/submission/${currentSubmissionId}/similar`);
                 const similar = await res.json();
-                
+
                 const similarityDiv = document.getElementById('detail-similarity');
                 const panelDiv = document.getElementById('similar-students-panel');
                 const listDiv = document.getElementById('similar-students-list');
-                
+
                 if (similar.length === 0) {
                     similarityDiv.innerHTML = '<span style="color: #22c55e;">✓ No similar code found</span>';
                     panelDiv.style.display = 'none';
@@ -639,7 +673,7 @@
                     const maxSim = similar[0].similarity;
                     const simColor = maxSim >= 90 ? '#dc2626' : maxSim >= 70 ? '#f59e0b' : '#22c55e';
                     similarityDiv.innerHTML = `<span style="color: ${simColor};">${similar.length} match${similar.length > 1 ? 'es' : ''} (up to ${maxSim}%)</span>`;
-                    
+
                     listDiv.innerHTML = similar.map(s => `
                         <div style="padding: 8px; background: white; border-radius: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
@@ -651,7 +685,7 @@
                             </div>
                         </div>
                     `).join('');
-                    
+
                     panelDiv.style.display = 'block';
                 }
             } catch (err) {
