@@ -35,6 +35,32 @@
             color: var(--text-main);
             padding: 24px;
             min-height: 100vh;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --secondary: #f472b6;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="dark"] body {
+            background: radial-gradient(circle at 10% 20%, #0f172a, #1e1b4b, #312e81);
+        }
+
+        [data-theme="dark"] .btn-back {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        [data-theme="dark"] .btn-back:hover {
+            background: rgba(30, 41, 59, 0.8);
+            color: var(--primary);
         }
 
         @keyframes bgMove {
@@ -327,13 +353,35 @@
                 </svg>
                 Live Analytics
             </div>
-            <!-- FIXED: Correct Link to Admin Page -->
-            <a href="/admin.html" class="btn-back">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 17l-5-5m0 0l5-5m-5 5h8a2 2 0 012 2v6"></path>
-                </svg>
-                Back to Admin
-            </a>
+
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn-back" onclick="toggleTheme()" title="Toggle Theme"
+                    style="padding: 10px; min-width: 44px; justify-content: center;">
+                    <svg id="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" style="display:none;">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+
+                <a href="/admin.html" class="btn-back">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 17l-5-5m0 0l5-5m-5 5h8a2 2 0 012 2v6"></path>
+                    </svg>
+                    Back to Admin
+                </a>
+            </div>
         </header>
 
         <!-- KPI Cards -->
@@ -450,8 +498,15 @@
             document.getElementById('val-ai').textContent = aiAvg + '%';
         }
 
+        window.chartInstances = {};
+
         function renderCharts(submissions) {
             const commonFont = { fontFamily: 'Outfit, sans-serif' };
+            const themeMode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const commonOptions = {
+                theme: { mode: themeMode },
+                chart: { background: 'transparent', toolbar: { show: false }, ...commonFont }
+            };
 
             // 1. Area Chart (Timeline)
             const timeMap = {};
@@ -463,28 +518,34 @@
                 .map(([t, c]) => [parseInt(t), c])
                 .sort((a, b) => a[0] - b[0]);
 
-            new ApexCharts(document.querySelector("#areaChart"), {
+            if (window.chartInstances.area) window.chartInstances.area.destroy();
+            window.chartInstances.area = new ApexCharts(document.querySelector("#areaChart"), {
+                ...commonOptions,
                 series: [{ name: 'Submissions', data: timelineData }],
-                chart: { type: 'area', height: 300, toolbar: { show: false }, ...commonFont },
+                chart: { type: 'area', height: 300, ...commonOptions.chart },
                 colors: ['#6366f1'],
                 fill: { type: 'gradient', gradient: { opacityFrom: 0.6, opacityTo: 0.1 } },
                 xaxis: { type: 'datetime' },
                 stroke: { curve: 'smooth', width: 2 },
                 dataLabels: { enabled: false }
-            }).render();
+            });
+            window.chartInstances.area.render();
 
             // 2. Donut Chart
             const statusCounts = { Accepted: 0, Rejected: 0 };
             submissions.forEach(s => s.status === 'accepted' ? statusCounts.Accepted++ : statusCounts.Rejected++);
 
-            new ApexCharts(document.querySelector("#donutChart"), {
+            if (window.chartInstances.donut) window.chartInstances.donut.destroy();
+            window.chartInstances.donut = new ApexCharts(document.querySelector("#donutChart"), {
+                ...commonOptions,
                 series: [statusCounts.Accepted, statusCounts.Rejected],
                 labels: ['Accepted', 'Rejected'],
                 chart: { type: 'donut', height: 300, ...commonFont },
                 colors: ['#10b981', '#ef4444'],
                 plotOptions: { pie: { donut: { size: '65%' } } },
-                legend: { position: 'bottom' }
-            }).render();
+                legend: { position: 'bottom', labels: { colors: themeMode === 'dark' ? '#f1f5f9' : '#1e293b' } }
+            });
+            window.chartInstances.donut.render();
 
             // 3. Bar Chart (Difficulty)
             const probStats = {};
@@ -496,30 +557,34 @@
             const probLabels = Object.keys(probStats);
             const probRates = probLabels.map(k => Math.round((probStats[k].acc / probStats[k].total) * 100));
 
-            new ApexCharts(document.querySelector("#barChart"), {
+            if (window.chartInstances.bar) window.chartInstances.bar.destroy();
+            window.chartInstances.bar = new ApexCharts(document.querySelector("#barChart"), {
+                ...commonOptions,
                 series: [{ name: 'Pass Rate (%)', data: probRates }],
-                chart: { type: 'bar', height: 300, toolbar: { show: false }, ...commonFont },
+                chart: { type: 'bar', height: 300, ...commonOptions.chart },
                 colors: ['#8b5cf6'],
                 plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
                 xaxis: { categories: probLabels },
                 yaxis: { max: 100 }
-            }).render();
+            });
+            window.chartInstances.bar.render();
 
             // 4. Scatter (Score vs AI)
-            // Just map score and AI score
             const scatterData = submissions.map(s => [s.score || 0, s.ai_score || 0]);
 
-            new ApexCharts(document.querySelector("#scatterChart"), {
+            if (window.chartInstances.scatter) window.chartInstances.scatter.destroy();
+            window.chartInstances.scatter = new ApexCharts(document.querySelector("#scatterChart"), {
+                ...commonOptions,
                 series: [{ name: 'Submissions', data: scatterData }],
-                chart: { type: 'scatter', height: 300, toolbar: { show: false }, ...commonFont },
+                chart: { type: 'scatter', height: 300, ...commonOptions.chart },
                 colors: ['#ec4899'],
                 xaxis: { title: { text: 'Score' }, min: 0, max: 100 },
                 yaxis: { title: { text: 'AI Probability' }, min: 0, max: 100 },
                 markers: { size: 5, strokeWidth: 0, hover: { size: 7 } }
-            }).render();
+            });
+            window.chartInstances.scatter.render();
 
             // 5. Heatmap (Day of Week vs Hour)
-            // Initialize 7 days x 24 hours
             const heatmapData = [];
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             for (let d = 0; d < 7; d++) {
@@ -527,31 +592,85 @@
                 for (let h = 0; h < 24; h++) hourData.push({ x: h.toString(), y: 0 });
                 heatmapData.push({ name: days[d], data: hourData });
             }
-
             submissions.forEach(s => {
                 const d = new Date(s.submitted_at);
                 const day = d.getDay();
                 const hour = d.getHours();
-                // Find correct series and data point
                 heatmapData[day].data[hour].y += 1;
             });
 
-            new ApexCharts(document.querySelector("#heatmapChart"), {
-                series: heatmapData.reverse(), // Sun at bottom usually? Or Mon top. Let's keep std order reversed for Y axis
-                chart: { type: 'heatmap', height: 350, toolbar: { show: false }, ...commonFont },
+            if (window.chartInstances.heatmap) window.chartInstances.heatmap.destroy();
+            window.chartInstances.heatmap = new ApexCharts(document.querySelector("#heatmapChart"), {
+                ...commonOptions,
+                series: heatmapData.reverse(),
+                chart: { type: 'heatmap', height: 350, ...commonOptions.chart },
                 colors: ['#6366f1'],
                 plotOptions: {
                     heatmap: {
                         shadeIntensity: 0.5,
                         colorScale: {
-                            ranges: [{ from: 0, to: 0, color: '#f1f5f9', name: 'None' }] // low contrast for empty
+                            ranges: [{ from: 0, to: 0, color: themeMode === 'dark' ? '#1e293b' : '#f1f5f9', name: 'None' }]
                         }
                     }
                 },
                 dataLabels: { enabled: false }
-            }).render();
+            });
+            window.chartInstances.heatmap.render();
         }
 
+        // Theme Logic
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+
+            // Reload charts to update theme
+            // We need submissions again. Storing them in global would be cleaner?
+            // For now, simple page reload is acceptable, OR we can fetch again/store globally.
+            // Let's assume we can just access data if we stored it?
+            // But renderCharts takes 'submissions'.
+            // I'll make initDashboard store it.
+            if (window.cachedSubmissions) renderCharts(window.cachedSubmissions);
+        }
+
+        function updateThemeIcon(theme) {
+            const moon = document.getElementById('icon-moon');
+            const sun = document.getElementById('icon-sun');
+            if (!moon || !sun) return;
+            if (theme === 'dark') { moon.style.display = 'none'; sun.style.display = 'block'; }
+            else { moon.style.display = 'block'; sun.style.display = 'none'; }
+        }
+
+        async function initDashboard() {
+            try {
+                const [subRes, stuRes] = await Promise.all([
+                    fetch('/api/admin/submissions'),
+                    fetch('/api/admin/students')
+                ]);
+
+                const submissions = await subRes.json();
+                const students = await stuRes.json();
+
+                window.cachedSubmissions = submissions; // Store for theme toggle re-render
+
+                renderKPIs(submissions, students);
+                renderCharts(submissions);
+
+                document.getElementById('loader').style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').textContent = "Failed to load data";
+            }
+        }
+
+        // Initialize
         initDashboard();
     </script>
 </body>

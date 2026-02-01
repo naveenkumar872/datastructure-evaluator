@@ -661,6 +661,43 @@ def serve_static_file(filename):
 
 
 # ============================================
+# Config Routes
+# ============================================
+
+@app.route('/api/public/config', methods=['GET'])
+def get_public_config():
+    """Get public configuration for student portal"""
+    try:
+        block_paste = get_setting('block_paste', 'false')
+        enable_editor = get_setting('enable_editor', 'true')
+        enable_upload = get_setting('enable_upload', 'true')
+        
+        return jsonify({
+            'block_paste': block_paste == 'true',
+            'enable_editor': enable_editor == 'true',
+            'enable_upload': enable_upload == 'true'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/config/general', methods=['POST'])
+def update_general_config():
+    """Update general configuration"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    try:
+        set_setting('block_paste', str(data.get('block_paste', False)).lower())
+        set_setting('enable_editor', str(data.get('enable_editor', True)).lower())
+        set_setting('enable_upload', str(data.get('enable_upload', True)).lower())
+        
+        return jsonify({'success': True, 'message': 'Settings updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================
 # Run Server
 # ============================================
 if __name__ == "__main__":
