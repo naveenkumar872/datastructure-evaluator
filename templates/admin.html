@@ -363,22 +363,22 @@
                     <div class="form-label" style="margin-bottom: 12px;">Select Time Range</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <button class="time-range-btn" data-range="1h"
-                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             1 Hour</button>
                         <button class="time-range-btn" data-range="2h"
-                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             2 Hours</button>
                         <button class="time-range-btn active" data-range="5h"
                             style="padding: 12px; border: 2px solid var(--primary); border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             5 Hours</button>
                         <button class="time-range-btn" data-range="12h"
-                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             12 Hours</button>
                         <button class="time-range-btn" data-range="24h"
-                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             24 Hours</button>
                         <button class="time-range-btn" data-range="48h"
-                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
+                            style="padding: 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">Last
                             48 Hours</button>
                     </div>
                 </div>
@@ -443,8 +443,8 @@
                     btn.style.color = 'white';
                 } else {
                     btn.style.border = '2px solid var(--border)';
-                    btn.style.background = 'white';
-                    btn.style.color = 'inherit';
+                    btn.style.background = 'var(--bg-primary)';
+                    btn.style.color = 'var(--text-primary)';
                 }
             });
 
@@ -520,7 +520,7 @@
                     resultsDiv.innerHTML = `
                         <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; text-align: center;">
                             <div style="font-weight: 600; color: #166534; margin-bottom: 10px;">✅ Reports Sent Successfully</div>
-                            <div style="display: flex; gap: 20px; font-size: 14px; justify-content: center;">
+                            <div style="display: flex; gap: 20px; font-size: 14px; justify-content: center; color: #166534;">
                                 <span><strong>${data.sent}</strong> sent</span>
                                 <span><strong>${data.failed}</strong> failed</span>
                                 <span><strong>${data.skipped}</strong> skipped</span>
@@ -877,6 +877,34 @@
                 };
             }
 
+            // Load Settings
+            async function loadSettings() {
+                try {
+                    const res = await fetch('/api/public/config');
+                    const data = await res.json();
+
+                    if (document.getElementById('check-block-paste'))
+                        document.getElementById('check-block-paste').checked = data.block_paste;
+                    if (document.getElementById('check-enable-editor'))
+                        document.getElementById('check-enable-editor').checked = data.enable_editor;
+                    if (document.getElementById('check-enable-upload'))
+                        document.getElementById('check-enable-upload').checked = data.enable_upload;
+
+                    // Extensions
+                    if (data.extensions) {
+                        const exts = data.extensions.split(',').map(e => e.trim());
+                        document.querySelectorAll('.ext-check').forEach(cb => {
+                            cb.checked = exts.includes(cb.value);
+                        });
+                        const builtIn = ['c', 'cpp', 'java', 'py', 'txt'];
+                        const custom = exts.filter(e => !builtIn.includes(e));
+                        const customInput = document.getElementById('settings-ext-custom');
+                        if (customInput) customInput.value = custom.join(', ');
+                    }
+                } catch (e) { console.error('Error loading settings:', e); }
+            }
+            loadSettings();
+
             const saveBtn = document.getElementById('btn-save-settings');
             if (saveBtn) {
                 saveBtn.onclick = async function () {
@@ -894,20 +922,15 @@
 
                     try {
                         // Save General Config
-                        await fetch('/api/admin/config/general', {
+                        const res = await fetch('/api/admin/config/general', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 block_paste: document.getElementById('check-block-paste').checked,
                                 enable_editor: document.getElementById('check-enable-editor').checked,
-                                enable_upload: document.getElementById('check-enable-upload').checked
+                                enable_upload: document.getElementById('check-enable-upload').checked,
+                                extensions: all
                             })
-                        });
-
-                        const res = await fetch('/api/admin/config/extensions', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ extensions: all })
                         });
                         const data = await res.json();
                         if (data.success) {
