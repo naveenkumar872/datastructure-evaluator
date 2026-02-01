@@ -7,6 +7,75 @@
   <title>Data Structure Evaluator - Student Portal</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Monaco Editor Loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+  <style>
+    /* Monaco Editor Integration Styles */
+    .submission-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      padding: 4px;
+      background: #f1f5f9;
+      width: fit-content;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 8px;
+      font-weight: 500;
+      color: #64748b;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .toggle-btn:hover {
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .toggle-btn.active {
+      background: white;
+      color: #6366f1;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-weight: 600;
+    }
+
+    .monaco-wrapper {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 400px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .editor-container-box {
+      display: none;
+    }
+
+    .editor-container-box.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -1036,6 +1105,9 @@
           // Setup upload for this form
           setupUpload(currentId);
 
+          // Inject Monaco Editor immediately
+          setTimeout(() => injectMonaco(currentId), 0);
+
           // Increment question ID for next question
           questionId++;
         });
@@ -1046,6 +1118,198 @@
 
     // Load dynamic questions on page load
     loadDynamicQuestions();
+
+    // =============================================
+    // MONACO EDITOR INTEGRATION
+    // =============================================
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' } });
+
+    // Global editor instances
+    const editors = {};
+
+    function injectMonaco(id) {
+      const card = document.getElementById(`problem-card-${id}`);
+      if (!card) return;
+
+      const uploadSection = card.querySelector('.upload-section');
+      if (!uploadSection || uploadSection.classList.contains('monaco-injected')) return;
+
+      uploadSection.classList.add('monaco-injected');
+
+      // Create Container Stucture
+      const container = document.createElement('div');
+      container.innerHTML = `
+            <div class="submission-toggle">
+                <button class="toggle-btn active" onclick="switchMode(${id}, 'upload')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    Upload File
+                </button>
+                <button class="toggle-btn" onclick="switchMode(${id}, 'editor')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: text-bottom; margin-right: 4px;"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Code Editor
+                </button>
+            </div>
+
+            <!-- Existing Upload Form Wrapper -->
+            <div id="mode-upload-${id}" class="editor-container-box active">
+                <!-- Form will be moved here -->
+            </div>
+
+            <!-- New Editor Wrapper -->
+            <div id="mode-editor-${id}" class="editor-container-box">
+                <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <select id="lang-select-${id}" class="form-input" style="width: 150px; padding: 6px;" onchange="changeLanguage(${id})">
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                    </select>
+                    <span style="font-size: 0.8rem; color: #64748b;">Powered by Monaco Editor</span>
+                </div>
+                <div id="monaco-container-${id}" class="monaco-wrapper"></div>
+                
+                <button class="btn primary" onclick="submitCode(${id})" style="margin-top: 16px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> 
+                    Run & Submit Code
+                </button>
+                <div id="editor-msg-${id}" class="upload-msg" style="margin-top: 10px;"></div>
+            </div>
+        `;
+
+      // Move existing form into the upload container
+      const existingForm = card.querySelector('form');
+      const modeUpload = container.querySelector(`#mode-upload-${id}`);
+      // We clone or move? Moving is better to keep listeners.
+      if (existingForm) {
+        existingForm.parentNode.insertBefore(container, existingForm);
+        modeUpload.appendChild(existingForm);
+      } else {
+        uploadSection.appendChild(container);
+      }
+    }
+
+    function switchMode(id, mode) {
+      // Toggle Buttons
+      const card = document.getElementById(`problem-card-${id}`);
+      const btns = card.querySelectorAll('.toggle-btn');
+      btns[0].classList.toggle('active', mode === 'upload');
+      btns[1].classList.toggle('active', mode === 'editor');
+
+      // Toggle Content
+      document.getElementById(`mode-upload-${id}`).classList.toggle('active', mode === 'upload');
+      document.getElementById(`mode-editor-${id}`).classList.toggle('active', mode === 'editor');
+
+      if (mode === 'editor') {
+        initEditorInstance(id);
+      }
+    }
+
+    function initEditorInstance(id) {
+      if (editors[id]) return; // Already initialized
+
+      require(['vs/editor/editor.main'], function () {
+        const el = document.getElementById(`monaco-container-${id}`);
+        if (!el) return;
+
+        const editor = monaco.editor.create(el, {
+          value: '// Write your solution here\n#include <stdio.h>\n\nint main() {\n    printf("Hello World");\n    return 0;\n}',
+          language: 'c',
+          theme: 'vs-light', // or vs-dark
+          minimap: { enabled: false },
+          automaticLayout: true,
+          fontSize: 14,
+          fontFamily: "'JetBrains Mono', 'Consolas', monospace",
+          scrollBeyondLastLine: false
+        });
+        editors[id] = editor;
+      });
+    }
+
+    function changeLanguage(id) {
+      const lang = document.getElementById(`lang-select-${id}`).value;
+      const editor = editors[id];
+      if (!editor) return;
+
+      const model = editor.getModel();
+      monaco.editor.setModelLanguage(model, lang === 'c' || lang === 'cpp' ? 'cpp' : lang);
+
+      // Update template if empty? Maybe later.
+    }
+
+    async function submitCode(id) {
+      const editor = editors[id];
+      if (!editor) return;
+
+      const content = editor.getValue();
+      const lang = document.getElementById(`lang-select-${id}`).value;
+      const extMap = { 'c': '.c', 'cpp': '.cpp', 'python': '.py', 'java': '.java' };
+      const filename = `solution${extMap[lang]}`;
+
+      // UI Feedback
+      const msg = document.getElementById(`editor-msg-${id}`);
+      const loadingIndicator = document.getElementById(`loading-indicator-${id}`) || document.getElementById('loading-indicator'); // Fallback for id 1
+
+      msg.textContent = '';
+      if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+
+      try {
+        // Create File from content
+        const file = new File([content], filename, { type: "text/plain" });
+        const formData = new FormData();
+        formData.append('cfile', file);
+
+        // Add problem context
+        const card = document.getElementById(`problem-card-${id}`);
+        const titleEl = card.querySelector('.problem-header h3');
+        const problemStatement = titleEl ? titleEl.innerText : 'Check Array is Sorted';
+        formData.append('problem', problemStatement);
+
+        // Correct Endpoint to match server.py
+        const res = await fetch('/upload-c', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          msg.textContent = '✓ Solution Submitted Successfully!';
+          msg.className = 'upload-msg success';
+
+          // Refresh submissions
+          if (window.showMySubmissions) showMySubmissions();
+          if (window.loadMySubmissionsCount) loadMySubmissionsCount();
+        } else {
+          msg.textContent = '✗ ' + data.message;
+          msg.className = 'upload-msg error';
+        }
+
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Error sending code.';
+        msg.className = 'upload-msg error';
+      } finally {
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+      }
+    }
+
+    // Initialize Monaco for hardcoded problems
+    [1, 2, 3, 4].forEach(id => {
+      // Wait for DOM
+      setTimeout(() => injectMonaco(id), 100);
+    });
+
+    // Hook into loadDynamicQuestions to initialize new ones
+    const originalLoadDynamic = loadDynamicQuestions;
+    loadDynamicQuestions = async function () {
+      await originalLoadDynamic(); // Run original
+      // Initialize Monaco for any new cards found
+      // We know dynamic starts at 5. Let's just find all problem-cards.
+      document.querySelectorAll('.problem-card').forEach(card => {
+        const id = parseInt(card.id.replace('problem-card-', ''));
+        if (id >= 5) injectMonaco(id);
+      });
+    };
   </script>
 </body>
 

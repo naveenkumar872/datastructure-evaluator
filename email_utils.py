@@ -13,7 +13,7 @@ load_dotenv()
 
 # Email configuration from environment variables
 SMTP_HOST = 'smtp.gmail.com'
-SMTP_PORT = 587
+SMTP_PORT = 465
 SMTP_USER = os.environ.get('SMTP_USER', '')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SENDER_EMAIL = SMTP_USER
@@ -396,18 +396,20 @@ Data Structure Evaluator
         msg.attach(MIMEText(html_content, 'html'))
         
         # Send email
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=180) as server:
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(msg)
         
         return {'success': True, 'message': f'Report sent to {to_email}'}
     
     except smtplib.SMTPAuthenticationError:
+        print(f"[-] SMTP Authentication failed for {to_email}")
         return {'success': False, 'message': 'SMTP authentication failed. Check credentials.'}
     except smtplib.SMTPException as e:
+        print(f"[-] SMTP Error sending to {to_email}: {e}")
         return {'success': False, 'message': f'SMTP error: {str(e)}'}
     except Exception as e:
+        print(f"[-] General Error sending to {to_email}: {e}")
         return {'success': False, 'message': f'Error sending email: {str(e)}'}
 
 
