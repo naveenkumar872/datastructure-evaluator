@@ -28,13 +28,16 @@ def import_students(excel_file):
     
     name_col = next((c for c in df.columns if 'name' in c.lower()), None)
     reg_col = next((c for c in df.columns if any(x in c.lower() for x in ['register', 'reg', 'roll', 'id', 'number'])), None)
+    email_col = next((c for c in df.columns if any(x in c.lower() for x in ['email', 'mail', 'e-mail'])), None)
 
     if not name_col or not reg_col:
         print(f"Could not automatically identify Name and Register Number columns.")
         print(f"Columns found: {list(df.columns)}")
         return
 
-    print(f"Mapped columns: Name='{name_col}', Username='{reg_col}'")
+    print(f"Mapped columns: Name='{name_col}', Username='{reg_col}', Email='{email_col or 'Not found'}'")
+    if not email_col:
+        print("Warning: No email column found. Emails will be empty.")
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -54,9 +57,14 @@ def import_students(excel_file):
     for index, row in df.iterrows():
         name = str(row[name_col]).strip()
         username = str(row[reg_col]).strip()
+        email = str(row[email_col]).strip() if email_col and pd.notna(row.get(email_col)) else ''
         
         if not username or username.lower() == 'nan' or not name or name.lower() == 'nan':
             continue
+        
+        # Clean email if it's 'nan'
+        if email.lower() == 'nan':
+            email = ''
 
         # Sequential password generation
         # index is 0-based, so we add 1
@@ -65,14 +73,15 @@ def import_students(excel_file):
         
         try:
             cursor.execute(f'''
-                INSERT INTO users (username, password, role, name) 
-                VALUES ({ph}, {ph}, {ph}, {ph})
-            ''', (username, hashed_pw, 'student', name))
+                INSERT INTO users (username, password, role, name, email) 
+                VALUES ({ph}, {ph}, {ph}, {ph}, {ph})
+            ''', (username, hashed_pw, 'student', name, email))
             
             credentials.append({
                 'Name': name,
                 'Username': username,
-                'Password': password
+                'Password': password,
+                'Email': email
             })
             added_count += 1
             

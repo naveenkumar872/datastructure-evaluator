@@ -3,9 +3,10 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from create_auth_db import (
     validate_user, get_user_role, save_submission, 
     get_all_submissions, get_submission_detail, 
-    get_all_students, get_student_submissions
+    get_all_students, get_student_submissions,
+    get_submissions_by_time_range, get_all_submissions_with_content
 )
-from evaluator import evaluate_uploaded_content
+from evaluator import evaluate_uploaded_content, find_similar_submissions
 import os
 import re
 from werkzeug.utils import secure_filename
@@ -162,10 +163,12 @@ def upload_c_file():
     score = 0
     status = 'rejected'
     evaluation_text = None
+    ai_score = 0
     
     if evaluation_result['success']:
         evaluation_text = evaluation_result['evaluation']
         score = extract_score_from_evaluation(evaluation_text)
+        ai_score = evaluation_result.get('ai_score', 0)  # Get AI detection score
         
         # Check for PASS/FAIL in evaluation or score threshold
         if 'PASS' in evaluation_text.upper() or score >= 60:
@@ -173,7 +176,7 @@ def upload_c_file():
         else:
             status = 'rejected'
     
-    # Save submission to database
+    # Save submission to database with AI score
     save_submission(
         user_id=session.get('user_id', 0),
         username=session['username'],
@@ -182,7 +185,8 @@ def upload_c_file():
         file_content=file_content,
         status=status,
         evaluation=evaluation_text,
-        score=score
+        score=score,
+        ai_score=ai_score  # Now properly saving the AI detection score
     )
     
     # Return status and score to student
@@ -193,6 +197,37 @@ def upload_c_file():
         'message': 'Submitted successfully!' if status == 'accepted' else 'Submission rejected.'
     }), 200
 
+
+# ============================================
+# Student API Routes
+# ============================================
+
+@app.route('/api/student/my-submissions')
+def api_student_submissions():
+    """Get all submissions for the currently logged-in student"""
+    if 'username' not in session:
+        return jsonify([]), 401
+    
+    # Get the logged-in student's username (register number)
+    username = session['username']
+    submissions = get_student_submissions(username)
+    
+    return jsonify(submissions)
+
+
+@app.route('/api/student/submission/<int:submission_id>')
+def api_student_submission_detail(submission_id):
+    """Get details of a specific submission (only if it belongs to the current student)"""
+    if 'username' not in session:
+        return jsonify({}), 401
+    
+    submission = get_submission_detail(submission_id)
+    
+    # Verify this submission belongs to the current user
+    if submission and submission.get('register_no') == session['username']:
+        return jsonify(submission)
+    
+    return jsonify({'error': 'Not found or unauthorized'}), 404
 
 
 # ============================================
@@ -243,6 +278,146 @@ def api_admin_submission_detail(submission_id):
     if submission:
         return jsonify(submission)
     return jsonify({'error': 'Not found'}), 404
+
+
+@app.route('/api/admin/submission/<int:submission_id>/similar')
+def api_admin_similar_submissions(submission_id):
+    """Find submissions with similar code to the given submission"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify([]), 401
+    
+    submission = get_submission_detail(submission_id)
+    if not submission or not submission.get('file_content'):
+        return jsonify([]), 404
+    
+    # Get all submissions for comparison
+    all_submissions = get_all_submissions_with_content()
+    
+    # Find similar submissions (excluding the current one)
+    similar = find_similar_submissions(
+        submission['file_content'], 
+        all_submissions, 
+        current_submission_id=submission_id,
+        threshold=70.0
+    )
+    
+    return jsonify(similar)
+
+
+@app.route('/api/admin/send-reports/preview', methods=['POST'])
+def api_admin_send_reports_preview():
+    """Preview which students will receive reports based on time range"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    time_range = data.get('timeRange', 'all')  # 1h, 6h, 24h, 7d, 30d, all
+    
+    # Get submissions based on time range
+    submissions = get_submissions_by_time_range(time_range)
+    
+    # Group by student
+    students_data = {}
+    for sub in submissions:
+        reg_no = sub.get('register_no') or sub.get('username')
+        if reg_no not in students_data:
+            students_data[reg_no] = {
+                'name': sub.get('name', sub.get('username', reg_no)),
+                'email': sub.get('email', ''),
+                'register_no': reg_no,
+                'submissions': []
+            }
+        students_data[reg_no]['submissions'].append(sub)
+    
+    # Build preview list
+    preview = []
+    for reg_no, data in students_data.items():
+        preview.append({
+            'register_no': reg_no,
+            'name': data['name'],
+            'email': data['email'] or 'No email',
+            'has_email': bool(data['email']),
+            'submission_count': len(data['submissions']),
+            'accepted': sum(1 for s in data['submissions'] if s['status'] == 'accepted'),
+            'avg_score': sum(s.get('score', 0) for s in data['submissions']) / len(data['submissions']) if data['submissions'] else 0
+        })
+    
+    # Sort by name
+    preview.sort(key=lambda x: x['name'])
+    
+    return jsonify({
+        'total_students': len(preview),
+        'with_email': sum(1 for p in preview if p['has_email']),
+        'without_email': sum(1 for p in preview if not p['has_email']),
+        'total_submissions': len(submissions),
+        'students': preview
+    })
+
+
+@app.route('/api/admin/send-reports', methods=['POST'])
+def api_admin_send_reports():
+    """Send reports to students based on time range"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    from email_utils import send_bulk_reports, is_email_configured
+    
+    if not is_email_configured():
+        return jsonify({
+            'success': False,
+            'message': 'Email not configured. Set SMTP_USER and SMTP_PASSWORD in environment variables.'
+        }), 400
+    
+    data = request.get_json()
+    time_range = data.get('timeRange', 'all')
+    
+    # Get submissions based on time range
+    submissions = get_submissions_by_time_range(time_range)
+    
+    if not submissions:
+        return jsonify({
+            'success': False,
+            'message': 'No submissions found for the selected time range.'
+        }), 400
+    
+    # Get all submissions for similarity checking
+    all_submissions = get_all_submissions_with_content()
+    
+    # Add similarity info to each submission
+    for sub in submissions:
+        if sub.get('file_content'):
+            similar = find_similar_submissions(
+                sub['file_content'],
+                all_submissions,
+                current_submission_id=sub.get('id'),
+                threshold=70.0
+            )
+            sub['similar_students'] = similar
+        else:
+            sub['similar_students'] = []
+    
+    # Group by student for bulk sending
+    students_data = {}
+    for sub in submissions:
+        reg_no = sub.get('register_no') or sub.get('username')
+        if reg_no not in students_data:
+            students_data[reg_no] = {
+                'name': sub.get('name', sub.get('username', reg_no)),
+                'email': sub.get('email', ''),
+                'submissions': []
+            }
+        students_data[reg_no]['submissions'].append(sub)
+    
+    # Send bulk reports
+    results = send_bulk_reports(students_data)
+    
+    return jsonify({
+        'success': True,
+        'sent': results['sent'],
+        'failed': results['failed'],
+        'skipped': results['skipped'],
+        'details': results['details']
+    })
 
 
 # ============================================
