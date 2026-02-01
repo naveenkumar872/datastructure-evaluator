@@ -41,7 +41,7 @@ import os
 import psycopg2
 
 # Use your environment variables or hardcode for testing
-DATABASE_URL="postgresql://datastructure_user:0HCZE6jQmX6HjRnTkK384FH55Rb6PY1Y@dpg-d5tolbi4d50c73eqt20g-a.singapore-postgres.render.com/datastructure"
+DATABASE_URL= None
 print(f"ff:{DATABASE_URL}")
 conn = psycopg2.connect(DATABASE_URL)
 cur = conn.cursor()
