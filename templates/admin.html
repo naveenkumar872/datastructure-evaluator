@@ -7,6 +7,7 @@
     <title>Data Structure Evaluator - Admin Dashboard</title>
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -96,6 +97,8 @@
             </div>
         </div>
 
+
+
         <!-- Main Content Grid -->
         <div class="container" style="padding: 0; max-width: none;">
             <!-- Student List Sidebar -->
@@ -107,9 +110,11 @@
                                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                                 <circle cx="9" cy="7" r="4" />
                                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                            </svg> Students</h3>
+                            </svg> Students <span id="sidebar-student-count"
+                                style="font-size: 0.9em; opacity: 0.8; margin-left: 5px;"></span></h3>
                     </div>
-                    <ul id="student-list" class="student-list">
+                    <ul id="student-list" class="student-list"
+                        style="max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 4px;">
                         <!-- Students will be loaded here -->
                     </ul>
                 </div>
@@ -124,6 +129,16 @@
                             <div class="panel-subtitle" id="submissions-subtitle">Click on a student to filter their
                                 submissions</div>
                         </div>
+                        <button class="btn secondary" id="btn-export-csv"
+                            onclick="window.location.href='/api/admin/export-submissions'" style="margin-right: 10px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right: 6px;">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Export Submissions 
+                        </button>
                         <button class="btn primary" id="btn-show-all">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" style="margin-right: 6px;">
@@ -133,25 +148,27 @@
                         </button>
                     </div>
 
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Problem</th>
-                                <th>File</th>
-                                <th>Status</th>
-                                <th>Score</th>
-                                <th>Submitted</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="submissions-table">
-                            <!-- Submissions will be loaded here -->
-                        </tbody>
-                    </table>
+                    <div class="table-wrapper" style="max-height: calc(100vh - 250px); overflow-y: auto;">
+                        <table class="data-table">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Problem</th>
+                                    <th>File</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Submitted</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissions-table">
+                                <!-- Submissions will be loaded here -->
+                            </tbody>
+                        </table>
 
-                    <div id="no-submissions" class="text-center text-muted mt-4 hidden" style="padding: 40px;">
-                        No submissions found.
+                        <div id="no-submissions" class="text-center text-muted mt-4 hidden" style="padding: 40px;">
+                            No submissions found.
+                        </div>
                     </div>
                 </div>
             </section>
@@ -520,6 +537,7 @@
                 const students = await studentsRes.json();
 
                 document.getElementById('total-students').textContent = students.length;
+                document.getElementById('sidebar-student-count').textContent = `(${students.length})`;
 
                 const studentList = document.getElementById('student-list');
                 studentList.innerHTML = students.map(s => `
@@ -611,10 +629,15 @@
             </tr>
           `).join('');
                 }
+
+
+
             } catch (err) {
                 console.error('Error loading submissions:', err);
             }
         }
+
+
 
         // Store current submission ID for similarity lookup
         let currentSubmissionId = null;
@@ -623,22 +646,22 @@
         async function viewSubmission(id) {
             try {
                 currentSubmissionId = id;
-                const res = await fetch(`/api/admin/submission/${id}`);
+                const res = await fetch(`/ api / admin / submission / ${id} `);
                 const sub = await res.json();
 
                 document.getElementById('detail-student').textContent = sub.username;
                 document.getElementById('detail-problem').textContent = sub.problem_title || 'N/A';
                 document.getElementById('detail-status').innerHTML = `
-          <span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}">
-            ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
-          </span>
-        `;
+                        < span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}" >
+                            ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+          </span >
+                        `;
                 document.getElementById('detail-score').textContent = `${sub.score || 0}/100`;
 
                 // AI Detection Score
                 const aiScore = sub.ai_score || 0;
-                const aiColor = aiScore >= 70 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
-                const aiLabel = aiScore >= 70 ? 'Likely AI' : aiScore >= 40 ? 'Uncertain' : 'Likely Human';
+                const aiColor = aiScore >= 60 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
+                const aiLabel = aiScore >= 60 ? 'Likely AI' : aiScore >= 40 ? 'Uncertain' : 'Likely Human';
                 document.getElementById('detail-ai-score').innerHTML = `
                     <span style="color: ${aiColor};">${aiScore}%</span>
                     <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">${aiLabel}</span>

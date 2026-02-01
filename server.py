@@ -1,5 +1,7 @@
 
-from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, Response
+import csv
+import io
 from create_auth_db import (
     validate_user, get_user_role, save_submission, 
     get_all_submissions, get_submission_detail, 
@@ -157,8 +159,12 @@ def upload_c_file():
     file = request.files['cfile']
     if file.filename == '':
         return jsonify({'success': False, 'message': 'No selected file'}), 400
-    if not file.filename.lower().endswith('.c'):
-        return jsonify({'success': False, 'message': 'Only .c files allowed'}), 400
+        
+    allowed_exts = {'.c', '.cpp', '.java', '.py', '.txt'}
+    file_ext = os.path.splitext(file.filename.lower())[1]
+    
+    if file_ext not in allowed_exts:
+        return jsonify({'success': False, 'message': f'File type not allowed. Supported: {", ".join(allowed_exts)}'}), 400
     
     # Get the problem statement from request
     problem_statement = request.form.get('problem', 'Check Array is Sorted')
@@ -363,6 +369,38 @@ def api_admin_send_reports_preview():
         'total_submissions': len(submissions),
         'students': preview
     })
+
+
+@app.route('/api/admin/export-submissions')
+def export_submissions_csv():
+    """Export all submissions as CSV"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    submissions = get_all_submissions()
+    
+    # Create CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Student Name', 'Register No', 'Problem', 'File', 'Status', 'Score', 'AI Score', 'Submitted At'])
+    
+    for s in submissions:
+        writer.writerow([
+            s.get('username', ''), 
+            s.get('register_no', ''), 
+            s.get('problem_title', ''), 
+            s.get('filename', ''),
+            s.get('status', ''), 
+            s.get('score', 0), 
+            s.get('ai_score', 0), 
+            s.get('submitted_at', '')
+        ])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=submissions_export.csv"}
+    )
 
 
 @app.route('/api/admin/send-reports', methods=['POST'])

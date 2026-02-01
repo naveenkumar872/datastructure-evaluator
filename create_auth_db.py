@@ -167,7 +167,7 @@ def get_all_submissions():
     
     # Join on username instead of user_id because user_id might change if users are re-imported
     cursor.execute('''
-        SELECT s.id, u.username, s.problem_title, s.filename, s.status, s.score, s.submitted_at, u.name 
+        SELECT s.id, u.username, s.problem_title, s.filename, s.status, s.score, s.submitted_at, u.name, s.ai_score 
         FROM submissions s
         JOIN users u ON s.username = u.username
         ORDER BY s.submitted_at DESC
@@ -183,7 +183,8 @@ def get_all_submissions():
         'filename': s[3],
         'status': s[4],
         'score': s[5],
-        'submitted_at': s[6]
+        'submitted_at': s[6],
+        'ai_score': s[8] if len(s) > 8 and s[8] is not None else 0
     } for s in submissions]
 
 
