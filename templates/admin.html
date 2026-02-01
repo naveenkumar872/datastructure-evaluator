@@ -32,6 +32,13 @@
             Data Structure Evaluator Admin
         </div>
         <div class="role">
+            <button id="btn-upload-question" class="btn primary" onclick="window.location.href='/questions.html'"
+                style="display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                Upload Question
+            </button>
             <div class="user-badge">
                 <div class="avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">A</div>
                 <span>Administrator</span>
@@ -67,6 +74,7 @@
                 <span id="reset-msg" style="margin-left: 8px; color: #dc2626; font-weight: 500;"></span>
             </div>
         </div>
+
 
         <!-- Stats Grid -->
         <div class="stats-grid">
@@ -726,6 +734,11 @@
             text = text.replace(/\bFAIL\b/g, '<span class="status-badge failed">✗ FAIL</span>');
             return text;
         }
+
+        // =============================================
+        // Question Management Functions
+        // =============================================
+
 
         // Initialize
         loadDashboard();
