@@ -12,12 +12,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Email configuration from environment variables
-SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+SMTP_HOST = 'smtp.gmail.com'
+SMTP_PORT = 587
 SMTP_USER = os.environ.get('SMTP_USER', '')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', SMTP_USER)
-SENDER_NAME = os.environ.get('SENDER_NAME', 'Data Structure Evaluator')
+SENDER_EMAIL = SMTP_USER
+SENDER_NAME = 'Data Structure Evaluator'
 
 
 def is_email_configured():
