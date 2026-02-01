@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Question Management - Admin</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <script>
+        // Check if the user is authenticated and is admin
+        fetch('/admin-check')
+            .then((response) => {
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login.html';
+            });
+    </script>
+
+    <header class="topbar">
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            Data Structure Evaluator Admin
+        </div>
+        <div class="role">
+            <button class="btn secondary" onclick="window.location.href='/admin.html'"
+                style="display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </button>
+            <div class="user-badge">
+                <div class="avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">A</div>
+                <span>Administrator</span>
+            </div>
+            <button id="btn-logout" class="btn secondary">Log Out</button>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Page Header -->
+        <div class="dashboard-header">
+            <h1>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="vertical-align: middle; margin-right: 8px;">
+                    <path
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Question Management
+            </h1>
+            <p>Upload new questions and manage existing ones</p>
+        </div>
+
+        <!-- Upload Question Section -->
+        <div class="panel" id="upload-question-section" style="margin-bottom: 24px;">
+            <div class="panel-header">
+                <h2 style="margin: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align: middle; margin-right: 8px;">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Upload New Question
+                </h2>
+            </div>
+            <div style="padding: 24px;">
+                <form id="upload-question-form" enctype="multipart/form-data">
+                    <div class="file-input-wrapper" style="margin-bottom: 16px;">
+                        <input type="file" id="question-file-input" name="questionFile"
+                            accept=".txt,.pdf,.doc,.docx,.ppt,.pptx" required style="display: none;" />
+                        <label for="question-file-input" class="file-label"
+                            style="display: flex; align-items: center; gap: 8px; padding: 16px; background: var(--bg-secondary); border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                            </svg>
+                            <span class="file-text">Choose file (txt, pdf, doc, docx, ppt, pptx)</span>
+                        </label>
+                    </div>
+
+                    <div
+                        style="margin-bottom: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.875rem; color: var(--text-muted);">
+                        <strong>💡 Tip:</strong> Format your file like this for best results:<br>
+                        <code
+                            style="display: block; margin-top: 8px; padding: 8px; background: var(--bg-primary); border-radius: 4px; font-size: 0.75rem;">
+                            Title: Your Question Title<br>
+                            Difficulty: Easy/Medium/Hard<br>
+                            Description: Full problem statement...
+                        </code>
+                    </div>
+
+                    <div id="upload-question-msg" style="margin-bottom: 16px; font-weight: 500;"></div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="reset" class="btn secondary">Clear</button>
+                        <button type="submit" class="btn primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right: 6px;">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                            </svg>
+                            Upload Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manage Questions Section -->
+        <div class="panel" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align: middle; margin-right: 8px;">
+                        <path
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Manage Questions
+                </h2>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <select id="question-filter" class="btn secondary" style="padding: 8px 12px; cursor: pointer;"
+                        onchange="loadQuestions()">
+                        <option value="active">Active Only</option>
+                        <option value="all">Show All</option>
+                    </select>
+                    <button class="btn secondary" onclick="loadQuestions()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-right: 6px;">
+                            <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>Title</th>
+                            <th style="width: 100px;">Difficulty</th>
+                            <th style="width: 100px;">Status</th>
+                            <th style="width: 150px;">Created</th>
+                            <th style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="questions-table-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                Loading questions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- View Question Modal -->
+    <div id="view-question-modal" class="modal hidden">
+        <div class="modal-card" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="modal-question-title">Question Details</h3>
+                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div style="padding: 24px;">
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-muted); font-size: 0.875rem;">ID:</strong>
+                    <span id="modal-question-id" style="margin-left: 8px;"></span>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-muted); font-size: 0.875rem;">Difficulty:</strong>
+                    <span id="modal-question-difficulty" class="difficulty-badge" style="margin-left: 8px;"></span>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong
+                        style="color: var(--text-muted); font-size: 0.875rem; display: block; margin-bottom: 8px;">Description:</strong>
+                    <div id="modal-question-description"
+                        style="white-space: pre-wrap; padding: 16px; background: var(--bg-secondary); border-radius: 8px; line-height: 1.6;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn secondary" onclick="closeViewModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logout functionality
+        document.getElementById('btn-logout').onclick = function () {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/login.html');
+        };
+
+        // Load all questions
+        async function loadQuestions() {
+            try {
+                const res = await fetch('/api/admin/questions');
+                const allQuestions = await res.json();
+
+                // Filter based on selection
+                const filter = document.getElementById('question-filter').value;
+                const questions = filter === 'active'
+                    ? allQuestions.filter(q => q.is_active === 1 || q.is_active === true)
+                    : allQuestions;
+
+                const tbody = document.getElementById('questions-table-body');
+
+                if (questions.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                ${filter === 'active' ? 'No active questions found.' : 'No questions found. Upload a question file to get started!'}
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = questions.map(q => `
+                    <tr>
+                        <td style="font-weight: 600;">${q.id}</td>
+                        <td style="font-weight: 500;">${q.title}</td>
+                        <td>
+                            <span class="difficulty-badge ${q.difficulty?.toLowerCase() || 'medium'}">
+                                ${q.difficulty || 'Medium'}
+                            </span>
+                        </td>
+                        <td>
+                            ${(q.is_active === 1 || q.is_active === true) ?
+                        '<span class="status-badge success">✓ Active</span>' :
+                        '<span class="status-badge failed">✗ Deleted</span>'
+                    }
+                        </td>
+                        <td>${formatDate(q.created_at)}</td>
+                        <td style="display: flex; gap: 6px;">
+                            <button class="btn secondary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="viewQuestion(${q.id})">
+                                View
+                            </button>
+                            ${(q.is_active === 1 || q.is_active === true) ? `
+                                <button class="btn danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="deleteQuestion(${q.id})">
+                                    Delete
+                                </button>
+                            ` : `
+                                <button class="btn danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="permanentlyDeleteQuestion(${q.id})">
+                                    Remove Permanently
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error('Error loading questions:', err);
+                const tbody = document.getElementById('questions-table-body');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--danger);">
+                            Error loading questions. Please try again.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // View question details
+        function viewQuestion(id) {
+            fetch(`/api/admin/questions`)
+                .then(res => res.json())
+                .then(questions => {
+                    const question = questions.find(q => q.id === id);
+                    if (question) {
+                        // Populate modal
+                        document.getElementById('modal-question-title').textContent = question.title;
+                        document.getElementById('modal-question-id').textContent = question.id;
+                        document.getElementById('modal-question-difficulty').textContent = question.difficulty || 'Medium';
+                        document.getElementById('modal-question-difficulty').className = `difficulty-badge ${(question.difficulty || 'Medium').toLowerCase()}`;
+                        document.getElementById('modal-question-description').textContent = question.description;
+
+                        // Show modal
+                        document.getElementById('view-question-modal').classList.remove('hidden');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error viewing question:', err);
+                    alert('Failed to load question details');
+                });
+        }
+
+        // Close view modal
+        function closeViewModal() {
+            document.getElementById('view-question-modal').classList.add('hidden');
+        }
+
+        // Close modal on background click
+        document.getElementById('view-question-modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeViewModal();
+            }
+        });
+
+        // Delete question
+        async function deleteQuestion(id) {
+            if (!confirm('Are you sure you want to delete this question? It will be hidden from students.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/admin/delete-question/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('✅ Question deleted successfully!');
+                    loadQuestions();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Error deleting question:', err);
+                alert('❌ Failed to delete question');
+            }
+        }
+
+        // Permanently delete question
+        async function permanentlyDeleteQuestion(id) {
+            if (!confirm('⚠️ WARNING: This will PERMANENTLY delete this question from the database. This action CANNOT be undone!\n\nAre you absolutely sure?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/admin/permanently-delete-question/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('✅ Question permanently deleted!');
+                    loadQuestions();
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            } catch (err) {
+                console.error('Error permanently deleting question:', err);
+                alert('❌ Failed to permanently delete question');
+            }
+        }
+
+        // Upload question file
+        document.getElementById('upload-question-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const msg = document.getElementById('upload-question-msg');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; animation: spin 1s linear infinite;">
+                    <path d="M4 4v5h.582M19.418 19.418A9 9 0 1 1 21 12" />
+                </svg>
+                Uploading...
+            `;
+            msg.textContent = 'Processing file...';
+            msg.style.color = 'var(--text-muted)';
+
+            try {
+                const res = await fetch('/api/admin/upload-question', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // Show success message
+                    msg.innerHTML = `✅ ${data.message}<br><small>Title: ${data.question.title} | Difficulty: ${data.question.difficulty}</small>`;
+                    msg.style.color = 'var(--success)';
+
+                    // Reset form and refresh questions
+                    e.target.reset();
+                    document.querySelector('.file-text').textContent = 'Choose file (txt, pdf, doc, docx, ppt, pptx)';
+                    loadQuestions();
+                } else {
+                    msg.textContent = '❌ ' + data.message;
+                    msg.style.color = 'var(--danger)';
+                }
+            } catch (err) {
+                console.error('Error uploading question:', err);
+                msg.textContent = '❌ Failed to upload question. Please try again.';
+                msg.style.color = 'var(--danger)';
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                    </svg>
+                    Upload Question
+                `;
+            }
+        });
+
+        // Update file input display
+        document.getElementById('question-file-input').addEventListener('change', function (e) {
+            const fileName = e.target.files[0]?.name || 'Choose file (txt, pdf, doc, docx, ppt, pptx)';
+            document.querySelector('.file-text').textContent = fileName;
+        });
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Load questions on page load
+        loadQuestions();
+    </script>
+</body>
+
+</html>

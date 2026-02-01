@@ -7,6 +7,7 @@
     <title>Data Structure Evaluator - Admin Dashboard</title>
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
@@ -31,12 +32,43 @@
             </svg>
             Data Structure Evaluator Admin
         </div>
-        <div class="role">
-            <div class="user-badge">
-                <div class="avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">A</div>
-                <span>Administrator</span>
+        <div class="role" style="display: flex; align-items: center; gap: 12px;">
+            <button id="btn-upload-question" class="btn primary" onclick="window.location.href='/questions.html'"
+                style="height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                Upload Question
+            </button>
+
+            <div class="user-badge"
+                style="height: 40px; padding: 0 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <div class="avatar"
+                    style="width: 24px; height: 24px; font-size: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    A</div>
+                <span style="font-weight: 500; font-size: 0.9rem; color: #334155;">Administrator</span>
             </div>
-            <button id="btn-logout" class="btn secondary">Log Out</button>
+
+            <button id="btn-settings" class="btn secondary"
+                style="height: 40px; padding: 0 16px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; gap: 8px; color: #475569;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z">
+                    </path>
+                </svg>
+                Settings
+            </button>
+
+            <button id="btn-logout" class="btn secondary"
+                style="height: 40px; padding: 0 16px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; gap: 8px; color: #475569;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Log Out
+            </button>
         </div>
     </header>
 
@@ -68,6 +100,7 @@
             </div>
         </div>
 
+
         <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card primary">
@@ -88,6 +121,8 @@
             </div>
         </div>
 
+
+
         <!-- Main Content Grid -->
         <div class="container" style="padding: 0; max-width: none;">
             <!-- Student List Sidebar -->
@@ -99,9 +134,11 @@
                                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                                 <circle cx="9" cy="7" r="4" />
                                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                            </svg> Students</h3>
+                            </svg> Students <span id="sidebar-student-count"
+                                style="font-size: 0.9em; opacity: 0.8; margin-left: 5px;"></span></h3>
                     </div>
-                    <ul id="student-list" class="student-list">
+                    <ul id="student-list" class="student-list"
+                        style="max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 4px;">
                         <!-- Students will be loaded here -->
                     </ul>
                 </div>
@@ -116,6 +153,24 @@
                             <div class="panel-subtitle" id="submissions-subtitle">Click on a student to filter their
                                 submissions</div>
                         </div>
+                        <button class="btn secondary" onclick="window.location.href='/analytics'"
+                            style="margin-right: 10px; border-color: #6366f1; color: #6366f1;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right: 6px;">
+                                <path d="M18 20V10M12 20V4M6 20v-6" />
+                            </svg>
+                            Live Analytics
+                        </button>
+                        <button class="btn secondary" id="btn-export-csv"
+                            onclick="window.location.href='/api/admin/export-submissions'" style="margin-right: 10px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" style="margin-right: 6px;">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Export Submissions
+                        </button>
                         <button class="btn primary" id="btn-show-all">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" style="margin-right: 6px;">
@@ -125,25 +180,27 @@
                         </button>
                     </div>
 
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Problem</th>
-                                <th>File</th>
-                                <th>Status</th>
-                                <th>Score</th>
-                                <th>Submitted</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="submissions-table">
-                            <!-- Submissions will be loaded here -->
-                        </tbody>
-                    </table>
+                    <div class="table-wrapper" style="max-height: calc(100vh - 250px); overflow-y: auto;">
+                        <table class="data-table">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Problem</th>
+                                    <th>File</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Submitted</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissions-table">
+                                <!-- Submissions will be loaded here -->
+                            </tbody>
+                        </table>
 
-                    <div id="no-submissions" class="text-center text-muted mt-4 hidden" style="padding: 40px;">
-                        No submissions found.
+                        <div id="no-submissions" class="text-center text-muted mt-4 hidden" style="padding: 40px;">
+                            No submissions found.
+                        </div>
                     </div>
                 </div>
             </section>
@@ -512,6 +569,7 @@
                 const students = await studentsRes.json();
 
                 document.getElementById('total-students').textContent = students.length;
+                document.getElementById('sidebar-student-count').textContent = `(${students.length})`;
 
                 const studentList = document.getElementById('student-list');
                 studentList.innerHTML = students.map(s => `
@@ -603,10 +661,15 @@
             </tr>
           `).join('');
                 }
+
+
+
             } catch (err) {
                 console.error('Error loading submissions:', err);
             }
         }
+
+
 
         // Store current submission ID for similarity lookup
         let currentSubmissionId = null;
@@ -615,22 +678,22 @@
         async function viewSubmission(id) {
             try {
                 currentSubmissionId = id;
-                const res = await fetch(`/api/admin/submission/${id}`);
+                const res = await fetch(`/ api / admin / submission / ${id} `);
                 const sub = await res.json();
 
                 document.getElementById('detail-student').textContent = sub.username;
                 document.getElementById('detail-problem').textContent = sub.problem_title || 'N/A';
                 document.getElementById('detail-status').innerHTML = `
-          <span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}">
-            ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
-          </span>
-        `;
+                        < span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}" >
+                            ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+          </span >
+                        `;
                 document.getElementById('detail-score').textContent = `${sub.score || 0}/100`;
 
                 // AI Detection Score
                 const aiScore = sub.ai_score || 0;
-                const aiColor = aiScore >= 70 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
-                const aiLabel = aiScore >= 70 ? 'Likely AI' : aiScore >= 40 ? 'Uncertain' : 'Likely Human';
+                const aiColor = aiScore >= 60 ? '#dc2626' : aiScore >= 40 ? '#f59e0b' : '#22c55e';
+                const aiLabel = aiScore >= 60 ? 'Likely AI' : aiScore >= 40 ? 'Uncertain' : 'Likely Human';
                 document.getElementById('detail-ai-score').innerHTML = `
                     <span style="color: ${aiColor};">${aiScore}%</span>
                     <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">${aiLabel}</span>
@@ -727,9 +790,159 @@
             return text;
         }
 
+        // =============================================
+        // Question Management Functions
+        // =============================================
+
+
         // Initialize
         loadDashboard();
-    </script>
-</body>
 
-</html>
+        // Settings Modal Handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const settingsModal = document.getElementById('settings-modal');
+            const customExtInput = document.getElementById('settings-ext-custom');
+            const extCheckboxes = document.querySelectorAll('.ext-check');
+
+            const btnSettings = document.getElementById('btn-settings');
+            if (btnSettings) {
+                btnSettings.onclick = async function () {
+                    settingsModal.classList.remove('hidden');
+                    // Load current settings
+                    try {
+                        const res = await fetch('/api/config/extensions');
+                        const data = await res.json();
+                        const currentExts = data.extensions.split(',').map(e => e.trim());
+
+                        const common = ['c', 'cpp', 'java', 'py', 'txt'];
+                        const custom = [];
+
+                        // Update checkboxes
+                        extCheckboxes.forEach(cb => {
+                            cb.checked = currentExts.includes(cb.value);
+                        });
+
+                        // Find custom ones
+                        currentExts.forEach(e => {
+                            if (e && !common.includes(e)) custom.push(e);
+                        });
+                        customExtInput.value = custom.join(', ');
+                    } catch (e) { console.error(e); }
+                };
+            }
+
+            const closeBtn = document.getElementById('close-settings-modal');
+            if (closeBtn) {
+                closeBtn.onclick = function () {
+                    settingsModal.classList.add('hidden');
+                };
+            }
+
+            const saveBtn = document.getElementById('btn-save-settings');
+            if (saveBtn) {
+                saveBtn.onclick = async function () {
+                    const btn = this;
+                    const msg = document.getElementById('settings-msg');
+
+                    btn.disabled = true;
+                    btn.textContent = 'Saving...';
+                    msg.textContent = '';
+                    msg.className = '';
+
+                    const selected = Array.from(extCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                    const custom = customExtInput.value.split(',').map(e => e.trim()).filter(e => e);
+                    const all = [...new Set([...selected, ...custom])].join(','); // unique
+
+                    try {
+                        const res = await fetch('/api/admin/config/extensions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ extensions: all })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            // Inline success message
+                            msg.textContent = '✓ Settings saved successfully!';
+                            msg.style.color = '#10b981';
+                            setTimeout(() => {
+                                settingsModal.classList.add('hidden');
+                                msg.textContent = '';
+                            }, 1500);
+                        } else {
+                            msg.textContent = 'Error: ' + data.message;
+                            msg.style.color = '#ef4444';
+                        }
+                    } catch (e) {
+                        msg.textContent = 'Connection error';
+                        msg.style.color = '#ef4444';
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Save Changes';
+                    }
+                };
+            }
+        });
+    </script>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-card" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z">
+                        </path>
+                    </svg>System Settings</h3>
+                <button class="modal-close" id="close-settings-modal">&times;</button>
+            </div>
+            <div style="padding: 24px;">
+                <h4 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;">Allowed File Extensions
+                </h4>
+                <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.95rem;">Select accepted file types
+                    for student submissions.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <input type="checkbox" class="ext-check" value="c" style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">.c (C Source)</span>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <input type="checkbox" class="ext-check" value="cpp" style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">.cpp (C++ Source)</span>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <input type="checkbox" class="ext-check" value="java" style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">.java (Java Source)</span>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <input type="checkbox" class="ext-check" value="py" style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">.py (Python Script)</span>
+                    </label>
+                    <label
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <input type="checkbox" class="ext-check" value="txt" style="width: 18px; height: 18px;">
+                        <span style="font-weight: 500;">.txt (Text File)</span>
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 500; margin-bottom: 8px; display: block;">Custom
+                        Extensions (comma separated)</label>
+                    <input type="text" id="settings-ext-custom" class="form-input" placeholder="e.g. js, rs, go"
+                        style="padding: 12px;">
+                </div>
+
+                <button class="btn primary" id="btn-save-settings"
+                    style="width: 100%; padding: 14px; font-size: 1rem;">Save Changes</button>
+                <div id="settings-msg"
+                    style="margin-top: 16px; text-align: center; min-height: 24px; font-weight: 500;"></div>
+            </div>
+        </div>
+    </div>
+</body>

@@ -80,6 +80,19 @@ def create_database():
         )
     ''')
 
+    # Create questions table for dynamically added problems
+    cursor.execute(f'''
+        CREATE TABLE IF NOT EXISTS questions (
+            id {id_type},
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            difficulty TEXT DEFAULT 'Medium',
+            is_active INTEGER DEFAULT 1,
+            created_at {timestamp_default},
+            created_by TEXT DEFAULT 'admin'
+        )
+    ''')
+
     # Insert sample admin user - handled carefully to avoid duplicates
     ph = get_placeholder()
     
@@ -154,7 +167,7 @@ def get_all_submissions():
     
     # Join on username instead of user_id because user_id might change if users are re-imported
     cursor.execute('''
-        SELECT s.id, u.username, s.problem_title, s.filename, s.status, s.score, s.submitted_at, u.name 
+        SELECT s.id, u.username, s.problem_title, s.filename, s.status, s.score, s.submitted_at, u.name, s.ai_score 
         FROM submissions s
         JOIN users u ON s.username = u.username
         ORDER BY s.submitted_at DESC
@@ -170,7 +183,8 @@ def get_all_submissions():
         'filename': s[3],
         'status': s[4],
         'score': s[5],
-        'submitted_at': s[6]
+        'submitted_at': s[6],
+        'ai_score': s[8] if len(s) > 8 and s[8] is not None else 0
     } for s in submissions]
 
 
@@ -389,7 +403,179 @@ def get_all_submissions_with_content():
     } for s in submissions]
 
 
+# ============================================
+# Question Management Functions
+# ============================================
+
+def add_question(title, description, difficulty='Medium', created_by='admin'):
+    """Add a new question to the database"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    if IS_POSTGRES:
+        # PostgreSQL: Use RETURNING to get the ID
+        cursor.execute(f'''
+            INSERT INTO questions (title, description, difficulty, created_by)
+            VALUES ({ph}, {ph}, {ph}, {ph})
+            RETURNING id
+        ''', (title, description, difficulty, created_by))
+        question_id = cursor.fetchone()[0]
+    else:
+        # SQLite: Use lastrowid
+        cursor.execute(f'''
+            INSERT INTO questions (title, description, difficulty, created_by)
+            VALUES ({ph}, {ph}, {ph}, {ph})
+        ''', (title, description, difficulty, created_by))
+        question_id = cursor.lastrowid
+    
+    conn.commit()
+    conn.close()
+    
+    return question_id
+
+
+def get_active_questions():
+    """Get all active questions for students"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Use TRUE for PostgreSQL, 1 for SQLite
+    active_value = 'TRUE' if IS_POSTGRES else '1'
+    
+    cursor.execute(f'''
+        SELECT id, title, description, difficulty, created_at
+        FROM questions
+        WHERE is_active = {active_value}
+        ORDER BY created_at ASC
+    ''')
+    
+    questions = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        'id': q[0],
+        'title': q[1],
+        'description': q[2],
+        'difficulty': q[3],
+        'created_at': q[4]
+    } for q in questions]
+
+
+def get_all_questions():
+    """Get all questions (for admin)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT id, title, description, difficulty, is_active, created_at, created_by
+        FROM questions
+        ORDER BY created_at DESC
+    ''')
+    
+    questions = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        'id': q[0],
+        'title': q[1],
+        'description': q[2],
+        'difficulty': q[3],
+        'is_active': q[4],
+        'created_at': q[5],
+        'created_by': q[6]
+    } for q in questions]
+
+
+def delete_question(question_id):
+    """Delete a question (soft delete by setting is_active to 0)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    # Use FALSE for PostgreSQL, 0 for SQLite
+    inactive_value = 'FALSE' if IS_POSTGRES else '0'
+    
+    cursor.execute(f'''
+        UPDATE questions
+        SET is_active = {inactive_value}
+        WHERE id = {ph}
+    ''', (question_id,))
+    
+    conn.commit()
+    conn.close()
+
+
+def permanently_delete_question(question_id):
+    """Permanently delete a question from the database"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    cursor.execute(f'''
+        DELETE FROM questions
+        WHERE id = {ph}
+    ''', (question_id,))
+    
+    conn.commit()
+    conn.close()
+
+
+
+def init_settings():
+    """Initialize system settings table and defaults"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    # Create settings table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS system_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    ''')
+    
+    # Initialize default allowed extensions
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", ('allowed_extensions',))
+    if not cursor.fetchone():
+        cursor.execute(f"INSERT INTO system_settings (key, value) VALUES ({ph}, {ph})", 
+                      ('allowed_extensions', 'c,cpp,java,py,txt'))
+                      
+    conn.commit()
+    conn.close()
+
+def get_setting(key, default=None):
+    """Get a system setting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", (key,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    return row[0] if row else default
+
+def set_setting(key, value):
+    """Set a system setting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    ph = get_placeholder()
+    
+    # Check if exists
+    cursor.execute(f"SELECT value FROM system_settings WHERE key = {ph}", (key,))
+    if cursor.fetchone():
+        cursor.execute(f"UPDATE system_settings SET value = {ph} WHERE key = {ph}", (value, key))
+    else:
+        cursor.execute(f"INSERT INTO system_settings (key, value) VALUES ({ph}, {ph})", (key, value))
+        
+    conn.commit()
+    conn.close()
+
+
 if __name__ == '__main__':
     create_database()
     add_email_column_if_missing()
     add_ai_score_column_if_missing()
+    init_settings()

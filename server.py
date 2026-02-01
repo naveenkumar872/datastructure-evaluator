@@ -1,12 +1,20 @@
 
-from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, Response
+import csv
+import io
 from create_auth_db import (
     validate_user, get_user_role, save_submission, 
     get_all_submissions, get_submission_detail, 
     get_all_students, get_student_submissions,
-    get_submissions_by_time_range, get_all_submissions_with_content
+    get_submissions_by_time_range, get_all_submissions_with_content,
+    add_question, get_active_questions, get_all_questions, delete_question,
+    permanently_delete_question, init_settings, get_setting, set_setting
 )
+
+# Initialize settings
+init_settings()
 from evaluator import evaluate_uploaded_content, find_similar_submissions
+from file_extractor import extract_text_from_file, parse_question_from_text
 import os
 import re
 from werkzeug.utils import secure_filename
@@ -51,6 +59,14 @@ def admin_html():
     if 'username' not in session or session.get('role') != 'admin':
         return redirect('/login.html')
     return render_template('admin.html')
+
+
+@app.route('/questions.html')
+def questions_html():
+    # Only admins can access this page
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect('/login.html')
+    return render_template('questions.html')
 
 
 # ============================================
@@ -146,8 +162,16 @@ def upload_c_file():
     file = request.files['cfile']
     if file.filename == '':
         return jsonify({'success': False, 'message': 'No selected file'}), 400
-    if not file.filename.lower().endswith('.c'):
-        return jsonify({'success': False, 'message': 'Only .c files allowed'}), 400
+        
+    # Validation against allowed extensions from DB
+    allowed_str = get_setting('allowed_extensions', 'c,cpp,java,py,txt')
+    # Clean string and make set of extensions (with . prefix)
+    allowed_set = {f".{ext.strip().lower()}" for ext in allowed_str.split(',') if ext.strip()}
+    
+    file_ext = os.path.splitext(file.filename.lower())[1]
+    
+    if file_ext not in allowed_set:
+         return jsonify({'success': False, 'message': f'File type not allowed. Supported: {allowed_str}'}), 400
     
     # Get the problem statement from request
     problem_statement = request.form.get('problem', 'Check Array is Sorted')
@@ -354,6 +378,70 @@ def api_admin_send_reports_preview():
     })
 
 
+@app.route('/api/admin/export-submissions')
+def export_submissions_csv():
+    """Export all submissions as CSV"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    submissions = get_all_submissions()
+    
+    # Create CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Student Name', 'Register No', 'Problem', 'File', 'Status', 'Score', 'AI Score', 'Submitted At'])
+    
+    for s in submissions:
+        writer.writerow([
+            s.get('username', ''), 
+            s.get('register_no', ''), 
+            s.get('problem_title', ''), 
+            s.get('filename', ''),
+            s.get('status', ''), 
+            s.get('score', 0), 
+            s.get('ai_score', 0), 
+            s.get('submitted_at', '')
+        ])
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=submissions_export.csv"}
+    )
+
+
+@app.route('/analytics')
+def analytics_dashboard():
+    """Analytics Dashboard Page"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login_page'))
+    return render_template('analytics.html')
+
+
+@app.route('/api/config/extensions')
+def get_allowed_extensions():
+    """Get allowed extensions (public)"""
+    exts = get_setting('allowed_extensions', 'c,cpp,java,py,txt')
+    return jsonify({'extensions': exts})
+
+
+@app.route('/api/admin/config/extensions', methods=['POST'])
+def update_allowed_extensions():
+    """Update allowed extensions (admin only)"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    exts = data.get('extensions', '')
+    
+    # Simple validation: valid characters
+    if not re.match(r'^[a-zA-Z0-9, ]+$', exts):
+         return jsonify({'success': False, 'message': 'Invalid format. Use comma separated alphanumeric values.'}), 400
+
+    set_setting('allowed_extensions', exts)
+    return jsonify({'success': True, 'extensions': exts})
+
+
 @app.route('/api/admin/send-reports', methods=['POST'])
 def api_admin_send_reports():
     """Send reports to students based on time range"""
@@ -418,6 +506,143 @@ def api_admin_send_reports():
         'skipped': results['skipped'],
         'details': results['details']
     })
+
+
+# ============================================
+# Question Management Routes
+# ============================================
+
+@app.route('/api/questions/active')
+def get_questions_active():
+    """Get all active questions for students"""
+    questions = get_active_questions()
+    return jsonify(questions)
+
+
+@app.route('/api/admin/questions')
+def get_questions_admin():
+    """Get all questions for admin (including inactive)"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    questions = get_all_questions()
+    return jsonify(questions)
+
+
+@app.route('/api/admin/upload-question', methods=['POST'])
+def upload_question_file():
+    """Upload a question file and extract content"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    if 'questionFile' not in request.files:
+        return jsonify({'success': False, 'message': 'No file uploaded'}), 400
+    
+    file = request.files['questionFile']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No file selected'}), 400
+    
+    # Check file extension
+    allowed_extensions = {'.txt', '.pdf', '.doc', '.docx', '.ppt', '.pptx'}
+    _, ext = os.path.splitext(file.filename.lower())
+    
+    if ext not in allowed_extensions:
+        return jsonify({
+            'success': False, 
+            'message': f'Unsupported file type. Allowed: {", ".join(allowed_extensions)}'
+        }), 400
+    
+    try:
+        # Save file temporarily
+        filename = secure_filename(file.filename)
+        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], f'temp_question_{filename}')
+        file.save(temp_path)
+        
+        # Extract text from file
+        extracted_text = extract_text_from_file(temp_path)
+        
+        # Clean up temp file
+        os.remove(temp_path)
+        
+        if extracted_text.startswith('Error:'):
+            return jsonify({'success': False, 'message': extracted_text}), 400
+        
+        # Parse question details
+        question_data = parse_question_from_text(extracted_text)
+        
+        # Add to database
+        question_id = add_question(
+            title=question_data['title'],
+            description=question_data['description'],
+            difficulty=question_data.get('difficulty', 'Medium'),
+            created_by=session['username']
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Question added successfully!',
+            'question_id': question_id,
+            'question': question_data
+        })
+        
+    except Exception as e:
+        # Clean up temp file if it exists
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        
+        return jsonify({
+            'success': False,
+            'message': f'Error processing file: {str(e)}'
+        }), 500
+
+
+@app.route('/api/questions/active', methods=['GET'])
+def get_active_questions_route():
+    """Get all active questions for students"""
+    try:
+        questions = get_active_questions()
+        return jsonify(questions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/questions', methods=['GET'])
+def get_all_questions_route():
+    """Get all questions for admin"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        questions = get_all_questions()
+        return jsonify(questions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/delete-question/<int:question_id>', methods=['DELETE'])
+def delete_question_route(question_id):
+    """Delete a question (soft delete)"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        delete_question(question_id)
+        return jsonify({'success': True, 'message': 'Question deleted successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/permanently-delete-question/<int:question_id>', methods=['DELETE'])
+def permanently_delete_question_route(question_id):
+    """Permanently delete a question from database"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        permanently_delete_question(question_id)
+        return jsonify({'success': True, 'message': 'Question permanently deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 # ============================================

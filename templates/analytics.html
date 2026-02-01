@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Analytics Dashboard - Data Structure Evaluator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-back {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #f1f5f9;
+        }
+
+        .btn-back:hover {
+            color: var(--primary);
+            background: #e0e7ff;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0.7;
+        }
+
+        .metric-title {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0 5px;
+            color: var(--text-main);
+        }
+
+        .metric-trend {
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up {
+            color: var(--success);
+        }
+
+        .trend-down {
+            color: var(--secondary);
+        }
+
+        /* Chart Areas */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media(max-width: 1024px) {
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            height: 100%;
+            min-height: 350px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loader">Processing Data...</div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="navbar">
+            <div class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="2">
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#ec4899" />
+                        </linearGradient>
+                    </defs>
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                </svg>
+                Live Analytics
+            </div>
+            <!-- FIXED: Correct Link to Admin Page -->
+            <a href="/admin.html" class="btn-back">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 17l-5-5m0 0l5-5m-5 5h8a2 2 0 012 2v6"></path>
+                </svg>
+                Back to Admin
+            </a>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Total Submissions</div>
+                <div class="metric-value" id="val-total">0</div>
+                <div class="metric-trend trend-up">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-width="2" />
+                    </svg>
+                    Live Count
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Acceptance Rate</div>
+                <div class="metric-value" id="val-rate">0%</div>
+                <div class="metric-trend" id="trend-rate">
+                    Quality Index
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Active Students</div>
+                <div class="metric-value" id="val-students">0</div>
+                <div class="metric-trend trend-up">
+                    Engaged
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Avg AI Confidence</div>
+                <div class="metric-value" id="val-ai">0%</div>
+                <div class="metric-trend" style="color: var(--secondary)">
+                    Detection Level
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 1: Activity & Distribution -->
+        <div class="grid-2">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Submission Activity (Volume)</div>
+                </div>
+                <div id="areaChart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Status Breakdown</div>
+                </div>
+                <div id="donutChart"></div>
+            </div>
+        </div>
+
+        <!-- Row 2: Performance & Heatmap -->
+        <div class="grid-3">
+            <div class="chart-card" style="grid-column: span 2;">
+                <div class="chart-header">
+                    <div class="chart-title">Problem Difficulty (Pass Rate)</div>
+                </div>
+                <div id="barChart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">AI vs Score Correlation</div>
+                </div>
+                <!-- Scatter Plot -->
+                <div id="scatterChart"></div>
+            </div>
+        </div>
+
+        <!-- Row 3: Heatmap -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">Submission Heatmap (Day vs Hour)</div>
+            </div>
+            <div id="heatmapChart"></div>
+        </div>
+    </div>
+
+    <script>
+        // Data Fetching and Chart Rendering
+        async function initDashboard() {
+            try {
+                const [subRes, stuRes] = await Promise.all([
+                    fetch('/api/admin/submissions'),
+                    fetch('/api/admin/students')
+                ]);
+
+                const submissions = await subRes.json();
+                const students = await stuRes.json();
+
+                renderKPIs(submissions, students);
+                renderCharts(submissions);
+
+                document.getElementById('loader').style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loader').textContent = "Failed to load data";
+            }
+        }
+
+        function renderKPIs(submissions, students) {
+            document.getElementById('val-total').textContent = submissions.length;
+
+            const accepted = submissions.filter(s => s.status === 'accepted').length;
+            const rate = submissions.length ? Math.round((accepted / submissions.length) * 100) : 0;
+            document.getElementById('val-rate').textContent = rate + '%';
+
+            const unique = new Set(submissions.map(s => s.username)).size;
+            document.getElementById('val-students').textContent = unique + ' / ' + students.length;
+
+            const aiTotal = submissions.reduce((sum, s) => sum + (s.ai_score || 0), 0);
+            const aiAvg = submissions.length ? Math.round(aiTotal / submissions.length) : 0;
+            document.getElementById('val-ai').textContent = aiAvg + '%';
+        }
+
+        function renderCharts(submissions) {
+            const commonFont = { fontFamily: 'Outfit, sans-serif' };
+
+            // 1. Area Chart (Timeline)
+            const timeMap = {};
+            submissions.forEach(s => {
+                const t = new Date(s.submitted_at).setMinutes(0, 0, 0);
+                timeMap[t] = (timeMap[t] || 0) + 1;
+            });
+            const timelineData = Object.entries(timeMap)
+                .map(([t, c]) => [parseInt(t), c])
+                .sort((a, b) => a[0] - b[0]);
+
+            new ApexCharts(document.querySelector("#areaChart"), {
+                series: [{ name: 'Submissions', data: timelineData }],
+                chart: { type: 'area', height: 300, toolbar: { show: false }, ...commonFont },
+                colors: ['#6366f1'],
+                fill: { type: 'gradient', gradient: { opacityFrom: 0.6, opacityTo: 0.1 } },
+                xaxis: { type: 'datetime' },
+                stroke: { curve: 'smooth', width: 2 },
+                dataLabels: { enabled: false }
+            }).render();
+
+            // 2. Donut Chart
+            const statusCounts = { Accepted: 0, Rejected: 0 };
+            submissions.forEach(s => s.status === 'accepted' ? statusCounts.Accepted++ : statusCounts.Rejected++);
+
+            new ApexCharts(document.querySelector("#donutChart"), {
+                series: [statusCounts.Accepted, statusCounts.Rejected],
+                labels: ['Accepted', 'Rejected'],
+                chart: { type: 'donut', height: 300, ...commonFont },
+                colors: ['#10b981', '#ef4444'],
+                plotOptions: { pie: { donut: { size: '65%' } } },
+                legend: { position: 'bottom' }
+            }).render();
+
+            // 3. Bar Chart (Difficulty)
+            const probStats = {};
+            submissions.forEach(s => {
+                if (!probStats[s.problem_title]) probStats[s.problem_title] = { total: 0, acc: 0 };
+                probStats[s.problem_title].total++;
+                if (s.status === 'accepted') probStats[s.problem_title].acc++;
+            });
+            const probLabels = Object.keys(probStats);
+            const probRates = probLabels.map(k => Math.round((probStats[k].acc / probStats[k].total) * 100));
+
+            new ApexCharts(document.querySelector("#barChart"), {
+                series: [{ name: 'Pass Rate (%)', data: probRates }],
+                chart: { type: 'bar', height: 300, toolbar: { show: false }, ...commonFont },
+                colors: ['#8b5cf6'],
+                plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+                xaxis: { categories: probLabels },
+                yaxis: { max: 100 }
+            }).render();
+
+            // 4. Scatter (Score vs AI)
+            // Just map score and AI score
+            const scatterData = submissions.map(s => [s.score || 0, s.ai_score || 0]);
+
+            new ApexCharts(document.querySelector("#scatterChart"), {
+                series: [{ name: 'Submissions', data: scatterData }],
+                chart: { type: 'scatter', height: 300, toolbar: { show: false }, ...commonFont },
+                colors: ['#ec4899'],
+                xaxis: { title: { text: 'Score' }, min: 0, max: 100 },
+                yaxis: { title: { text: 'AI Probability' }, min: 0, max: 100 },
+                markers: { size: 5, strokeWidth: 0, hover: { size: 7 } }
+            }).render();
+
+            // 5. Heatmap (Day of Week vs Hour)
+            // Initialize 7 days x 24 hours
+            const heatmapData = [];
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            for (let d = 0; d < 7; d++) {
+                const hourData = [];
+                for (let h = 0; h < 24; h++) hourData.push({ x: h.toString(), y: 0 });
+                heatmapData.push({ name: days[d], data: hourData });
+            }
+
+            submissions.forEach(s => {
+                const d = new Date(s.submitted_at);
+                const day = d.getDay();
+                const hour = d.getHours();
+                // Find correct series and data point
+                heatmapData[day].data[hour].y += 1;
+            });
+
+            new ApexCharts(document.querySelector("#heatmapChart"), {
+                series: heatmapData.reverse(), // Sun at bottom usually? Or Mon top. Let's keep std order reversed for Y axis
+                chart: { type: 'heatmap', height: 350, toolbar: { show: false }, ...commonFont },
+                colors: ['#6366f1'],
+                plotOptions: {
+                    heatmap: {
+                        shadeIntensity: 0.5,
+                        colorScale: {
+                            ranges: [{ from: 0, to: 0, color: '#f1f5f9', name: 'None' }] // low contrast for empty
+                        }
+                    }
+                },
+                dataLabels: { enabled: false }
+            }).render();
+        }
+
+        initDashboard();
+    </script>
+</body>
+
+</html>
