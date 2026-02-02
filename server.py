@@ -13,7 +13,7 @@ from create_auth_db import (
 
 # Initialize settings
 init_settings()
-from evaluator import evaluate_uploaded_content, find_similar_submissions
+from evaluator import evaluate_uploaded_content, find_similar_submissions, calculate_similarity
 from file_extractor import extract_text_from_file, parse_question_from_text
 import os
 import re
@@ -700,6 +700,93 @@ def update_general_config():
         return jsonify({'success': True, 'message': 'Settings updated'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================
+# Forensics Graph
+# ============================================
+
+@app.route('/api/admin/plagiarism-graph', methods=['POST'])
+def get_plagiarism_graph():
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json
+    problem_title = data.get('problem_title')
+    threshold = float(data.get('threshold', 70))
+    
+    submissions = get_all_submissions()
+    
+    # Filter submissions
+    target_subs = [s for s in submissions if not problem_title or s.get('problem_title') == problem_title]
+    
+    # Latest per user
+    latest_subs = {}
+    for s in target_subs:
+        latest_subs[s['username']] = s
+        
+    node_list = list(latest_subs.values())
+    nodes = []
+    edges = []
+    
+    # Read codes
+    codes = {}
+    for sub in node_list:
+        try:
+            path = os.path.join(app.config['UPLOAD_FOLDER'], sub['filename'])
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                    codes[sub['username']] = f.read()
+            else:
+                codes[sub['username']] = ""
+        except:
+            codes[sub['username']] = ""
+
+    # Build Graph
+    for i in range(len(node_list)):
+        u = node_list[i]
+        
+        # Add Node
+        nodes.append({
+            'id': u['username'],
+            'label': u['username'],
+            'group': 'student',
+            'value': 10,  # Size
+            'title': f"User: {u['username']}<br>Score: {u.get('score', 0)}<br>Time: {u.get('submitted_at')}"
+        })
+        
+        # Add Edges (Compare with subsequent nodes)
+        for j in range(i + 1, len(node_list)):
+            v = node_list[j]
+            
+            code1 = codes.get(u['username'])
+            code2 = codes.get(v['username'])
+            
+            if not code1 or not code2: continue
+            
+            sim = calculate_similarity(code1, code2)
+            
+            if sim >= threshold:
+                # Add Edge
+                # Direction: Earlier -> Later (Source -> Copier)
+                t1 = u.get('submitted_at', '')
+                t2 = v.get('submitted_at', '')
+                
+                if t1 < t2:
+                    src, dst = u['username'], v['username']
+                else:
+                    src, dst = v['username'], u['username']
+                    
+                edges.append({
+                    'from': src, 
+                    'to': dst, 
+                    'value': sim, 
+                    'label': f"{int(sim)}%",
+                    'arrows': 'to',
+                    'color': {'color': '#ef4444', 'opacity': sim/100}
+                })
+
+    return jsonify({'nodes': nodes, 'edges': edges})
 
 
 # ============================================

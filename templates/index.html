@@ -976,7 +976,7 @@
           noSubmissions.classList.add('hidden');
           tbody.innerHTML = submissions.map(s => `
             <tr>
-              <td style="font-weight: 500;">${s.problem_title || 'N/A'}</td>
+              <td style="font-weight: 500;">${(s.problem_title && s.problem_title.trim()) ? s.problem_title : s.filename}</td>
               <td>${s.filename}</td>
               <td>
                 <span class="status-badge ${s.status === 'accepted' ? 'success' : 'failed'}">
@@ -1004,7 +1004,7 @@
         const sub = await res.json();
 
         document.getElementById('modal-student-name').textContent = currentUserName;
-        document.getElementById('modal-problem-title').textContent = sub.problem_title || 'N/A';
+        document.getElementById('modal-problem-title').textContent = (sub.problem_title && sub.problem_title.trim()) ? sub.problem_title : sub.filename;
         document.getElementById('modal-score').textContent = `${sub.score || 0}/100`;
         document.getElementById('modal-code-preview').textContent = sub.file_content || 'No code available';
 
@@ -1455,7 +1455,7 @@
 
         // Add problem context
         const card = document.getElementById(`problem-card-${id}`);
-        const titleEl = card.querySelector('.problem-header h3');
+        const titleEl = card.querySelector('.problem-header h2') || card.querySelector('.problem-header h3');
         const problemStatement = titleEl ? titleEl.innerText : 'Check Array is Sorted';
         formData.append('problem', problemStatement);
 
