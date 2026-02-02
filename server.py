@@ -13,7 +13,7 @@ from create_auth_db import (
 
 # Initialize settings
 init_settings()
-from evaluator import evaluate_uploaded_content, find_similar_submissions
+from evaluator import evaluate_uploaded_content, find_similar_submissions, calculate_similarity
 from file_extractor import extract_text_from_file, parse_question_from_text
 import os
 import re
@@ -200,11 +200,16 @@ def upload_c_file():
         else:
             status = 'rejected'
     
+    # Extract title safely
+    clean_statement = problem_statement.strip()
+    p_title = clean_statement.split('\n')[0][:100] if clean_statement else filename
+    if not p_title: p_title = filename
+
     # Save submission to database with AI score
     save_submission(
         user_id=session.get('user_id', 0),
         username=session['username'],
-        problem_title=problem_statement.split('\n')[0][:100],
+        problem_title=p_title,
         filename=filename,
         file_content=file_content,
         status=status,
@@ -700,6 +705,127 @@ def update_general_config():
         return jsonify({'success': True, 'message': 'Settings updated'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================
+# Forensics Graph
+# ============================================
+
+@app.route('/api/admin/plagiarism-graph', methods=['POST'])
+def get_plagiarism_graph():
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json
+    problem_title = data.get('problem_title')
+    threshold = float(data.get('threshold', 70))
+    
+    all_subs_with_content = get_all_submissions_with_content()
+    
+    # Filter submissions by problem title if provided
+    # Only keep the latest submission per user for the graph to avoid clutter
+    latest_subs = {}
+    
+    for s in all_subs_with_content:
+        # Filter by problem title (Loose matching to handle "1. Problem" vs "Problem")
+        if problem_title:
+             p_title = s.get('problem_title', '')
+             # Check for exact match or if problem_title is contained in the submission title
+             if p_title != problem_title and problem_title not in p_title:
+                 continue
+            
+        username = s['username']
+        # Since the list is ordered by submitted_at DESC, the first one we encounter is the latest
+        if username not in latest_subs:
+            latest_subs[username] = s
+
+    node_list = list(latest_subs.values())
+    nodes = []
+    edges = []
+    
+    # Extract codes map
+    codes = {sub['username']: sub['file_content'] for sub in node_list if sub.get('file_content')}
+
+    # Build Graph
+    for i in range(len(node_list)):
+        u = node_list[i]
+        
+        # Add Node
+        nodes.append({
+            'id': u['username'],
+            'label': u['username'],
+            'group': 'student',
+            'value': 10,  # Size
+            'title': f"User: {u['username']}<br>Score: {u.get('score', 0)}<br>Time: {u.get('submitted_at')}"
+        })
+        
+        # Add Edges (Compare with subsequent nodes)
+        for j in range(i + 1, len(node_list)):
+            v = node_list[j]
+            
+            code1 = codes.get(u['username'])
+            code2 = codes.get(v['username'])
+            
+            if not code1 or not code2: continue
+            
+            sim = calculate_similarity(code1, code2)
+            
+            if sim >= threshold:
+                # Add Edge
+                # Direction: Earlier -> Later (Source -> Copier)
+                t1 = u.get('submitted_at', '')
+                t2 = v.get('submitted_at', '')
+                
+                if t1 < t2:
+                    src, dst = u['username'], v['username']
+                else:
+                    src, dst = v['username'], u['username']
+                    
+                edges.append({
+                    'from': src, 
+                    'to': dst, 
+                    'value': sim, 
+                    'label': f"{int(sim)}%",
+                    'arrows': 'to',
+                    'color': {'color': '#ef4444', 'opacity': sim/100}
+                })
+
+    return jsonify({'nodes': nodes, 'edges': edges})
+
+
+@app.route('/api/admin/debug-db')
+def debug_db_status():
+    """Debug endpoint to check DB status"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    status = {
+        'url_present': bool(os.environ.get('DATABASE_URL')),
+        'is_postgres_flag': bool(os.environ.get('DATABASE_URL')), # re-check env
+    }
+    
+    try:
+        from create_auth_db import get_db_connection, IS_POSTGRES
+        conn = get_db_connection()
+        status['actual_connection'] = str(conn)
+        status['module_is_postgres'] = IS_POSTGRES
+        
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM submissions")
+        status['submission_count'] = cur.fetchone()[0]
+        
+        cur.execute("SELECT count(*) FROM users")
+        status['user_count'] = cur.fetchone()[0]
+        
+        # Check join
+        cur.execute("SELECT count(*) FROM submissions s JOIN users u ON s.username = u.username")
+        status['join_count'] = cur.fetchone()[0]
+        
+        conn.close()
+    except Exception as e:
+        status['error'] = str(e)
+        
+    return jsonify(status)
 
 
 # ============================================

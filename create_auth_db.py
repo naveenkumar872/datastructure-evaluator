@@ -386,7 +386,7 @@ def get_all_submissions_with_content():
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT s.id, s.username, s.problem_title, s.file_content, u.name
+        SELECT s.id, s.username, s.problem_title, s.file_content, u.name, s.submitted_at, s.score
         FROM submissions s
         JOIN users u ON s.username = u.username
         ORDER BY s.submitted_at DESC
@@ -399,7 +399,9 @@ def get_all_submissions_with_content():
         'username': s[1],
         'problem_title': s[2],
         'file_content': s[3],
-        'name': s[4] if s[4] else s[1]
+        'name': s[4] if s[4] else s[1],
+        'submitted_at': s[5],
+        'score': s[6]
     } for s in submissions]
 
 

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 
 <body>
@@ -48,6 +49,14 @@
                     A</div>
                 <span style="font-weight: 500; font-size: 0.9rem; color: #334155;">Administrator</span>
             </div>
+
+            <button class="btn secondary" onclick="window.location.href='/analytics'"
+                style="height: 40px; padding: 0 16px; margin-right: 10px; border: 1px solid #6366f1; color: #6366f1; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>
+                Analytics
+            </button>
 
             <button id="btn-settings" class="btn secondary"
                 style="height: 40px; padding: 0 16px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; gap: 8px; color: #475569;">
@@ -175,14 +184,7 @@
                             <div class="panel-subtitle" id="submissions-subtitle">Click on a student to filter their
                                 submissions</div>
                         </div>
-                        <button class="btn secondary" onclick="window.location.href='/analytics'"
-                            style="margin-right: 10px; border-color: #6366f1; color: #6366f1;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" style="margin-right: 6px;">
-                                <path d="M18 20V10M12 20V4M6 20v-6" />
-                            </svg>
-                            Live Analytics
-                        </button>
+
                         <button class="btn secondary" id="btn-export-csv"
                             onclick="window.location.href='/api/admin/export-submissions'" style="margin-right: 10px;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -671,11 +673,11 @@
                     noSubmissions.classList.add('hidden');
                     tbody.innerHTML = submissions.map(s => `
             <tr>
-              <td class="student-name">
+              <td>
                 <div>${s.username}</div>
                 <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">${s.register_no || ''}</div>
               </td>
-              <td>${s.problem_title || 'N/A'}</td>
+              <td>${(s.problem_title && s.problem_title.trim()) ? s.problem_title : s.filename}</td>
               <td>${s.filename}</td>
               <td>
                 <span class="status-badge ${s.status === 'accepted' ? 'success' : 'failed'}">
@@ -713,7 +715,7 @@
                 const sub = await res.json();
 
                 document.getElementById('detail-student').textContent = sub.username;
-                document.getElementById('detail-problem').textContent = sub.problem_title || 'N/A';
+                document.getElementById('detail-problem').textContent = (sub.problem_title && sub.problem_title.trim()) ? sub.problem_title : sub.filename;
                 document.getElementById('detail-status').innerHTML = `
                         < span class="status-badge ${sub.status === 'accepted' ? 'success' : 'failed'}" >
                             ${sub.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
@@ -1084,4 +1086,7 @@
             }
         }
     </script>
+
+
+
 </body>
