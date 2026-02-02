@@ -200,11 +200,16 @@ def upload_c_file():
         else:
             status = 'rejected'
     
+    # Extract title safely
+    clean_statement = problem_statement.strip()
+    p_title = clean_statement.split('\n')[0][:100] if clean_statement else filename
+    if not p_title: p_title = filename
+
     # Save submission to database with AI score
     save_submission(
         user_id=session.get('user_id', 0),
         username=session['username'],
-        problem_title=problem_statement.split('\n')[0][:100],
+        problem_title=p_title,
         filename=filename,
         file_content=file_content,
         status=status,
@@ -715,32 +720,31 @@ def get_plagiarism_graph():
     problem_title = data.get('problem_title')
     threshold = float(data.get('threshold', 70))
     
-    submissions = get_all_submissions()
+    all_subs_with_content = get_all_submissions_with_content()
     
-    # Filter submissions
-    target_subs = [s for s in submissions if not problem_title or s.get('problem_title') == problem_title]
-    
-    # Latest per user
+    # Filter submissions by problem title if provided
+    # Only keep the latest submission per user for the graph to avoid clutter
     latest_subs = {}
-    for s in target_subs:
-        latest_subs[s['username']] = s
-        
+    
+    for s in all_subs_with_content:
+        # Filter by problem title (Loose matching to handle "1. Problem" vs "Problem")
+        if problem_title:
+             p_title = s.get('problem_title', '')
+             # Check for exact match or if problem_title is contained in the submission title
+             if p_title != problem_title and problem_title not in p_title:
+                 continue
+            
+        username = s['username']
+        # Since the list is ordered by submitted_at DESC, the first one we encounter is the latest
+        if username not in latest_subs:
+            latest_subs[username] = s
+
     node_list = list(latest_subs.values())
     nodes = []
     edges = []
     
-    # Read codes
-    codes = {}
-    for sub in node_list:
-        try:
-            path = os.path.join(app.config['UPLOAD_FOLDER'], sub['filename'])
-            if os.path.exists(path):
-                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                    codes[sub['username']] = f.read()
-            else:
-                codes[sub['username']] = ""
-        except:
-            codes[sub['username']] = ""
+    # Extract codes map
+    codes = {sub['username']: sub['file_content'] for sub in node_list if sub.get('file_content')}
 
     # Build Graph
     for i in range(len(node_list)):
@@ -787,6 +791,41 @@ def get_plagiarism_graph():
                 })
 
     return jsonify({'nodes': nodes, 'edges': edges})
+
+
+@app.route('/api/admin/debug-db')
+def debug_db_status():
+    """Debug endpoint to check DB status"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    status = {
+        'url_present': bool(os.environ.get('DATABASE_URL')),
+        'is_postgres_flag': bool(os.environ.get('DATABASE_URL')), # re-check env
+    }
+    
+    try:
+        from create_auth_db import get_db_connection, IS_POSTGRES
+        conn = get_db_connection()
+        status['actual_connection'] = str(conn)
+        status['module_is_postgres'] = IS_POSTGRES
+        
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM submissions")
+        status['submission_count'] = cur.fetchone()[0]
+        
+        cur.execute("SELECT count(*) FROM users")
+        status['user_count'] = cur.fetchone()[0]
+        
+        # Check join
+        cur.execute("SELECT count(*) FROM submissions s JOIN users u ON s.username = u.username")
+        status['join_count'] = cur.fetchone()[0]
+        
+        conn.close()
+    except Exception as e:
+        status['error'] = str(e)
+        
+    return jsonify(status)
 
 
 # ============================================
